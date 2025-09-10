@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Travel Assistant - Smart Packing Lists
 
 A modern web application that generates personalized packing lists for travelers using AI-powered recommendations based on destination, trip duration, and trip type.
