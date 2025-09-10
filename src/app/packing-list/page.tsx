@@ -177,7 +177,7 @@ export default function PackingListPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Generating your personalized packing list...</p>
+          <p className="text-slate-700">Generating your personalized packing list...</p>
         </div>
       </div>
     )
@@ -202,7 +202,7 @@ export default function PackingListPage() {
                 Packing List
               </h1>
               {tripData && (
-                <p className="text-gray-600">
+                <p className="text-slate-700">
                   {tripData.destinationCity}, {tripData.destinationCountry} • {tripData.duration} days • {tripData.tripType}
                 </p>
               )}
@@ -221,7 +221,7 @@ export default function PackingListPage() {
               max={totalItems}
               showPercentage={true}
             />
-            <div className="flex justify-between text-sm text-gray-600 mt-2">
+            <div className="flex justify-between text-sm text-slate-700 mt-2">
               <span>{packedItems} of {totalItems} items packed</span>
               <span>
                 {progress === 100 ? (
@@ -293,7 +293,7 @@ export default function PackingListPage() {
               <CardHeader>
                 <h3 className="text-lg font-semibold text-gray-900 capitalize">
                   {getCategoryLabel(category)}
-                  <span className="ml-2 text-sm font-normal text-gray-500">
+                  <span className="ml-2 text-sm font-normal text-slate-600">
                     ({groupedItems[category].filter(item => item.packed).length}/{groupedItems[category].length})
                   </span>
                 </h3>
@@ -344,7 +344,7 @@ export default function PackingListPage() {
                           ) : (
                             <span
                               className={`${
-                                item.packed ? 'line-through text-gray-500' : 'text-gray-900'
+                                item.packed ? 'line-through text-slate-600' : 'text-slate-900'
                               }`}
                             >
                               {item.name}

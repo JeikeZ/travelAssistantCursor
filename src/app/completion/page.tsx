@@ -121,7 +121,7 @@ export default function CompletionPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
                 You&apos;re All Set! 🎉
               </h2>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="text-xl text-slate-700 mb-8">
                 Your packing list is complete and you&apos;re ready for your adventure
                 {tripData && (
                   <span className="block mt-2 font-medium text-blue-600">
@@ -143,19 +143,19 @@ export default function CompletionPage() {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium text-gray-700">Destination:</span>
-                      <p className="text-gray-900">{tripData.destinationCity}, {tripData.destinationCountry}</p>
+                      <span className="font-medium text-slate-800">Destination:</span>
+                      <p className="text-slate-900">{tripData.destinationCity}, {tripData.destinationCountry}</p>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-700">Duration:</span>
-                      <p className="text-gray-900">{tripData.duration} days</p>
+                      <span className="font-medium text-slate-800">Duration:</span>
+                      <p className="text-slate-900">{tripData.duration} days</p>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-700">Trip Type:</span>
-                      <p className="text-gray-900 capitalize">{tripData.tripType}</p>
+                      <span className="font-medium text-slate-800">Trip Type:</span>
+                      <p className="text-slate-900 capitalize">{tripData.tripType}</p>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-700">Status:</span>
+                      <span className="font-medium text-slate-800">Status:</span>
                       <p className="text-green-600 font-medium">✅ Ready to go!</p>
                     </div>
                   </div>
@@ -189,7 +189,7 @@ export default function CompletionPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Have an Amazing Trip! ✈️
               </h3>
-              <p className="text-gray-600">
+              <p className="text-slate-700">
                 Don&apos;t forget to double-check your essential items before leaving, 
                 and have a wonderful time exploring {tripData?.destinationCity}!
               </p>
@@ -204,14 +204,14 @@ export default function CompletionPage() {
                   <h3 className="text-2xl font-semibold text-gray-900 text-center">
                     Help Us Improve
                   </h3>
-                  <p className="text-gray-600 text-center">
+                  <p className="text-slate-700 text-center">
                     Your feedback helps us create better packing lists for everyone
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Confidence Score */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                    <label className="block text-sm font-medium text-slate-800 mb-3">
                       How confident do you feel about your packing? (1-10)
                     </label>
                     <div className="flex space-x-2">
@@ -233,7 +233,7 @@ export default function CompletionPage() {
 
                   {/* Recommendation */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                    <label className="block text-sm font-medium text-slate-800 mb-3">
                       Would you recommend this service to a friend or family member?
                     </label>
                     <div className="flex space-x-4">
@@ -257,7 +257,7 @@ export default function CompletionPage() {
 
                   {/* Missing Items */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-800 mb-2">
                       Was there anything we forgot that you would have liked to bring?
                     </label>
                     <Input
@@ -269,11 +269,11 @@ export default function CompletionPage() {
 
                   {/* Additional Feedback */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-800 mb-2">
                       Any additional feedback? (optional)
                     </label>
                     <textarea
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none text-slate-900 placeholder:text-slate-500"
                       rows={3}
                       placeholder="Tell us how we can improve..."
                       value={feedback.additionalFeedback}
@@ -310,7 +310,7 @@ export default function CompletionPage() {
                   <h3 className="text-2xl font-bold text-gray-900 mb-4">
                     Thank You!
                   </h3>
-                  <p className="text-gray-600 mb-8">
+                  <p className="text-slate-700 mb-8">
                     Your feedback has been submitted and will help us improve the experience for future travelers.
                   </p>
                   
@@ -326,7 +326,7 @@ export default function CompletionPage() {
                     <h4 className="font-semibold text-gray-900 mb-2">
                       Safe Travels! 🌟
                     </h4>
-                    <p className="text-gray-600">
+                    <p className="text-slate-700">
                       We hope you have an amazing trip to {tripData?.destinationCity}!
                     </p>
                   </div>

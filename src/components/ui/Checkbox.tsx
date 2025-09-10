@@ -30,7 +30,7 @@ export function Checkbox({ className, label, ...props }: CheckboxProps) {
         </div>
       </div>
       {label && (
-        <span className="text-sm text-gray-700 select-none">
+        <span className="text-sm text-slate-800 select-none">
           {label}
         </span>
       )}

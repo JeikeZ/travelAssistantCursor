@@ -92,7 +92,7 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
               Travel Assistant
             </h1>
-            <p className="mt-2 text-lg text-gray-600">
+            <p className="mt-2 text-lg text-slate-700">
               Generate personalized packing lists for your perfect trip
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function Home() {
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">
                 Where are you headed?
               </h2>
-              <p className="text-gray-600">
+              <p className="text-slate-700">
                 Tell us about your trip and we&apos;ll create a personalized packing list for you
               </p>
             </div>
@@ -119,7 +119,7 @@ export default function Home() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <MapPin className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-700">Destination</span>
+                    <span className="text-sm font-medium text-slate-800">Destination</span>
                   </div>
                   <Input
                     placeholder="Country"
@@ -143,7 +143,7 @@ export default function Home() {
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">Trip Duration</span>
+                  <span className="text-sm font-medium text-slate-800">Trip Duration</span>
                 </div>
                 <Input
                   type="number"
@@ -159,7 +159,7 @@ export default function Home() {
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Briefcase className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">Trip Type</span>
+                  <span className="text-sm font-medium text-slate-800">Trip Type</span>
                 </div>
                 <Select
                   options={tripTypes}
@@ -189,7 +189,7 @@ export default function Home() {
               <MapPin className="w-6 h-6 text-blue-600" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Location-Specific</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-700">
               Get recommendations based on your destination&apos;s climate and customs
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function Home() {
               <Calendar className="w-6 h-6 text-green-600" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Duration-Aware</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-700">
               Tailored lists that account for your trip length and activities
             </p>
           </div>
@@ -207,7 +207,7 @@ export default function Home() {
               <Briefcase className="w-6 h-6 text-purple-600" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Never Forget</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-700">
               Essential items are highlighted so you never forget the important stuff
             </p>
           </div>
