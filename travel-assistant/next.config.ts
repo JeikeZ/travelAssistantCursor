@@ -1,19 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Minimal configuration for Vercel compatibility
   trailingSlash: false,
-  async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-        ],
-      },
-    ]
+  poweredByHeader: false,
+  compress: true,
+  
+  // Ensure proper routing
+  async redirects() {
+    return []
   },
+  
+  async rewrites() {
+    return []
+  }
 };
 
 export default nextConfig;
