@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ],
+  "functions": {
+    "src/app/api/generate-packing-list/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
