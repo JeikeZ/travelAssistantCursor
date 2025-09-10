@@ -20,7 +20,7 @@ export function ProgressBar({
     <div className="space-y-2">
       {showPercentage && (
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Packing Progress</span>
+          <span className="text-slate-700">Packing Progress</span>
           <span className="font-medium text-blue-600">{percentage}%</span>
         </div>
       )}
