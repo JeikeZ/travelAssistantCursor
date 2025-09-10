@@ -21,8 +21,8 @@ export function Button({
         {
           'bg-blue-600 text-white hover:bg-blue-700 shadow-md': variant === 'primary',
           'bg-gray-100 text-gray-900 hover:bg-gray-200': variant === 'secondary',
-          'border border-gray-300 bg-transparent hover:bg-gray-50': variant === 'outline',
-          'hover:bg-gray-100': variant === 'ghost',
+          'border border-gray-300 bg-transparent text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-800': variant === 'outline',
+          'text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800': variant === 'ghost',
         },
         {
           'h-8 px-3 text-sm': size === 'sm',

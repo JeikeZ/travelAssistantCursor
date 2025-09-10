@@ -222,7 +222,7 @@ export default function CompletionPage() {
                           className={`w-10 h-10 rounded-lg border-2 font-medium transition-all ${
                             feedback.confidenceScore === score
                               ? 'bg-blue-600 text-white border-blue-600'
-                              : 'border-gray-300 text-gray-700 hover:border-blue-400'
+                              : 'border-gray-300 text-gray-900 hover:border-blue-400 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800'
                           }`}
                         >
                           {score}
