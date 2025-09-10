@@ -1,0 +1,2 @@
+# travelAssistantCursor
+TravelAssistant with Cursor
