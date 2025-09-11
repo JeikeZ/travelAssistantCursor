@@ -36,3 +36,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure interactive elements default to readable text color */
+button, [role="button"], a, input, select, textarea {
+  color: var(--foreground);
+}
+
+/* Muted placeholders for readability */
+input::placeholder, textarea::placeholder {
+  color: var(--muted-foreground);
+}
