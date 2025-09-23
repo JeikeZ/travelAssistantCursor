@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
 import { Cloud, CloudRain, Loader2 } from 'lucide-react'
 import { Card, CardHeader, CardContent } from './Card'
 import { WeatherData, formatDate, convertTemperature } from '@/lib/utils'
@@ -10,38 +10,46 @@ interface WeatherForecastProps {
   country: string
 }
 
-export function WeatherForecast({ city, country }: WeatherForecastProps) {
+function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>('C')
 
-  useEffect(() => {
-    const fetchWeather = async () => {
-      if (!city || !country) return
+  const fetchWeather = useCallback(async () => {
+    if (!city || !country) return
+    
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`)
       
-      setIsLoading(true)
-      setError(null)
-      
-      try {
-        const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`)
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch weather data')
-        }
-        
-        const data: WeatherData = await response.json()
-        setWeatherData(data)
-      } catch (err) {
-        console.error('Error fetching weather:', err)
-        setError('Unable to load weather data')
-      } finally {
-        setIsLoading(false)
+      if (!response.ok) {
+        throw new Error('Failed to fetch weather data')
       }
+      
+      const data: WeatherData = await response.json()
+      setWeatherData(data)
+    } catch (err) {
+      console.error('Error fetching weather:', err)
+      setError('Unable to load weather data')
+    } finally {
+      setIsLoading(false)
     }
-
-    fetchWeather()
   }, [city, country])
+
+  useEffect(() => {
+    fetchWeather()
+  }, [fetchWeather])
+
+  const toggleToCelsius = useCallback(() => {
+    setTemperatureUnit('C')
+  }, [])
+
+  const toggleToFahrenheit = useCallback(() => {
+    setTemperatureUnit('F')
+  }, [])
 
   if (isLoading) {
     return (
@@ -55,7 +63,7 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
             {/* Temperature Unit Toggle */}
             <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
               <button
-                onClick={() => setTemperatureUnit('C')}
+                onClick={toggleToCelsius}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
                   temperatureUnit === 'C'
                     ? 'bg-white text-blue-600 shadow-sm'
@@ -65,7 +73,7 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
                 °C
               </button>
               <button
-                onClick={() => setTemperatureUnit('F')}
+                onClick={toggleToFahrenheit}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
                   temperatureUnit === 'F'
                     ? 'bg-white text-blue-600 shadow-sm'
@@ -99,7 +107,7 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
             {/* Temperature Unit Toggle */}
             <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
               <button
-                onClick={() => setTemperatureUnit('C')}
+                onClick={toggleToCelsius}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
                   temperatureUnit === 'C'
                     ? 'bg-white text-blue-600 shadow-sm'
@@ -109,7 +117,7 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
                 °C
               </button>
               <button
-                onClick={() => setTemperatureUnit('F')}
+                onClick={toggleToFahrenheit}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
                   temperatureUnit === 'F'
                     ? 'bg-white text-blue-600 shadow-sm'
@@ -214,3 +222,5 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
     </Card>
   )
 }
+
+export const WeatherForecast = memo(WeatherForecastComponent)

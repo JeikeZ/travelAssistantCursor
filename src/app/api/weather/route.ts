@@ -10,6 +10,13 @@ interface WeatherData {
   }
 }
 
+// Cache for weather data (in production, use Redis or similar)
+const weatherCache = new Map<string, { data: unknown; timestamp: number }>()
+const CACHE_DURATION = 30 * 60 * 1000 // 30 minutes
+
+// Request deduplication
+const pendingRequests = new Map<string, Promise<unknown>>()
+
 interface GeocodingResult {
   results?: Array<{
     latitude: number
@@ -77,6 +84,72 @@ async function getCoordinates(city: string, country: string): Promise<{ lat: num
   }
 }
 
+async function fetchWeatherData(city: string, country: string) {
+  const cacheKey = `${city.toLowerCase()}-${country.toLowerCase()}`
+  
+  // Check cache first
+  const cached = weatherCache.get(cacheKey)
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data
+  }
+  
+  // Check if request is already pending
+  if (pendingRequests.has(cacheKey)) {
+    return await pendingRequests.get(cacheKey)
+  }
+  
+  // Create new request
+  const requestPromise = (async () => {
+    try {
+      // Get coordinates for the location
+      const coordinates = await getCoordinates(city, country)
+      if (!coordinates) {
+        throw new Error('Location not found')
+      }
+      
+      // Fetch weather data from Open-Meteo
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7`
+      
+      const weatherResponse = await fetch(weatherUrl)
+      if (!weatherResponse.ok) {
+        throw new Error('Failed to fetch weather data')
+      }
+      
+      const weatherData: WeatherData = await weatherResponse.json()
+      
+      // Format the response
+      const forecast = weatherData.daily.time.map((date, index) => ({
+        date,
+        maxTemp: Math.round(weatherData.daily.temperature_2m_max[index]),
+        minTemp: Math.round(weatherData.daily.temperature_2m_min[index]),
+        weatherCode: weatherData.daily.weather_code[index],
+        description: weatherCodeMap[weatherData.daily.weather_code[index]]?.description || 'Unknown',
+        icon: weatherCodeMap[weatherData.daily.weather_code[index]]?.icon || '❓',
+        precipitationProbability: weatherData.daily.precipitation_probability_max[index] || 0
+      }))
+      
+      const result = {
+        location: `${city}, ${country}`,
+        coordinates,
+        forecast
+      }
+      
+      // Cache the result
+      weatherCache.set(cacheKey, { data: result, timestamp: Date.now() })
+      
+      return result
+    } finally {
+      // Remove from pending requests
+      pendingRequests.delete(cacheKey)
+    }
+  })()
+  
+  // Store the pending request
+  pendingRequests.set(cacheKey, requestPromise)
+  
+  return await requestPromise
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -90,41 +163,16 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Get coordinates for the location
-    const coordinates = await getCoordinates(city, country)
-    if (!coordinates) {
-      return NextResponse.json(
-        { error: 'Location not found' },
-        { status: 404 }
-      )
-    }
+    const weatherData = await fetchWeatherData(city, country)
     
-    // Fetch weather data from Open-Meteo
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7`
+    const response = NextResponse.json(weatherData)
     
-    const weatherResponse = await fetch(weatherUrl)
-    if (!weatherResponse.ok) {
-      throw new Error('Failed to fetch weather data')
-    }
+    // Add caching headers
+    response.headers.set('Cache-Control', 'public, max-age=1800, stale-while-revalidate=3600') // 30 minutes cache, 1 hour stale
+    response.headers.set('CDN-Cache-Control', 'public, max-age=1800')
+    response.headers.set('Vercel-CDN-Cache-Control', 'public, max-age=1800')
     
-    const weatherData: WeatherData = await weatherResponse.json()
-    
-    // Format the response
-    const forecast = weatherData.daily.time.map((date, index) => ({
-      date,
-      maxTemp: Math.round(weatherData.daily.temperature_2m_max[index]),
-      minTemp: Math.round(weatherData.daily.temperature_2m_min[index]),
-      weatherCode: weatherData.daily.weather_code[index],
-      description: weatherCodeMap[weatherData.daily.weather_code[index]]?.description || 'Unknown',
-      icon: weatherCodeMap[weatherData.daily.weather_code[index]]?.icon || '❓',
-      precipitationProbability: weatherData.daily.precipitation_probability_max[index] || 0
-    }))
-    
-    return NextResponse.json({
-      location: `${city}, ${country}`,
-      coordinates,
-      forecast
-    })
+    return response
     
   } catch (error) {
     console.error('Error in weather API:', error)
