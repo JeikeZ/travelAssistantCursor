@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Cloud, CloudRain, Loader2 } from 'lucide-react'
 import { Card, CardHeader, CardContent } from './Card'
-import { WeatherData, formatDate } from '@/lib/utils'
+import { WeatherData, formatDate, convertTemperature } from '@/lib/utils'
 
 interface WeatherForecastProps {
   city: string
@@ -14,6 +14,7 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>('C')
 
   useEffect(() => {
     const fetchWeather = async () => {
@@ -46,9 +47,34 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
     return (
       <Card className="w-full">
         <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Cloud className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Cloud className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+            </div>
+            {/* Temperature Unit Toggle */}
+            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setTemperatureUnit('C')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                  temperatureUnit === 'C'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                °C
+              </button>
+              <button
+                onClick={() => setTemperatureUnit('F')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                  temperatureUnit === 'F'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                °F
+              </button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -65,9 +91,34 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
     return (
       <Card className="w-full">
         <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Cloud className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Cloud className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+            </div>
+            {/* Temperature Unit Toggle */}
+            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setTemperatureUnit('C')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                  temperatureUnit === 'C'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                °C
+              </button>
+              <button
+                onClick={() => setTemperatureUnit('F')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                  temperatureUnit === 'F'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                °F
+              </button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -85,9 +136,34 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center space-x-2">
-          <Cloud className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Cloud className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+          </div>
+          {/* Temperature Unit Toggle */}
+          <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setTemperatureUnit('C')}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                temperatureUnit === 'C'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              °C
+            </button>
+            <button
+              onClick={() => setTemperatureUnit('F')}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                temperatureUnit === 'F'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              °F
+            </button>
+          </div>
         </div>
         <p className="text-sm text-slate-600">{weatherData.location}</p>
       </CardHeader>
@@ -116,7 +192,7 @@ export function WeatherForecast({ city, country }: WeatherForecastProps) {
               
               <div className="text-right">
                 <div className="font-semibold text-gray-900">
-                  {day.maxTemp}° / {day.minTemp}°
+                  {convertTemperature(day.maxTemp, 'C', temperatureUnit)}° / {convertTemperature(day.minTemp, 'C', temperatureUnit)}°
                 </div>
                 {day.precipitationProbability > 0 && (
                   <div className="text-sm text-blue-600 flex items-center">
