@@ -14,6 +14,8 @@ function getOpenAIClient() {
 export interface TripData {
   destinationCountry: string
   destinationCity: string
+  destinationState?: string
+  destinationDisplayName?: string
   duration: number
   tripType: string
 }
@@ -34,7 +36,8 @@ export async function generatePackingList(tripData: TripData): Promise<PackingIt
       throw new Error('OpenAI client not available')
     }
 
-    const prompt = `Generate a comprehensive packing list for a ${tripData.duration}-day ${tripData.tripType} trip to ${tripData.destinationCity}, ${tripData.destinationCountry}.
+    const locationString = tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`
+    const prompt = `Generate a comprehensive packing list for a ${tripData.duration}-day ${tripData.tripType} trip to ${locationString}.
 
 Please return a JSON array of items with the following structure for each item:
 {

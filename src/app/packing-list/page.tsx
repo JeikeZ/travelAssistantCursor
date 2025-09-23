@@ -37,6 +37,8 @@ export default function PackingListPage() {
   const [tripData, setTripData] = useState<{
     destinationCountry: string
     destinationCity: string
+    destinationState?: string
+    destinationDisplayName?: string
     duration: number
     tripType: string
   } | null>(null)
@@ -53,6 +55,8 @@ export default function PackingListPage() {
   const generatePackingList = useCallback(async (tripData: {
     destinationCountry: string
     destinationCity: string
+    destinationState?: string
+    destinationDisplayName?: string
     duration: number
     tripType: string
   }) => {
@@ -275,7 +279,7 @@ export default function PackingListPage() {
               </h1>
               {tripData && (
                 <p className="text-slate-700">
-                  {tripData.destinationCity}, {tripData.destinationCountry} • {tripData.duration} days • {tripData.tripType}
+                  {tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`} • {tripData.duration} days • {tripData.tripType}
                 </p>
               )}
             </div>

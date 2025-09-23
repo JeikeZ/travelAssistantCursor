@@ -4,9 +4,9 @@ import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { MapPin, Calendar, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
+import { CitySearchInput, CityOption } from '@/components/ui/CitySearchInput'
 
 const tripTypes = [
   { value: '', label: 'Select trip type' },
@@ -22,8 +22,7 @@ const tripTypes = [
 export default function Home() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    destinationCountry: '',
-    destinationCity: '',
+    destination: null as CityOption | null,
     duration: '',
     tripType: '',
   })
@@ -33,11 +32,8 @@ export default function Home() {
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {}
     
-    if (!formData.destinationCountry.trim()) {
-      newErrors.destinationCountry = 'Country is required'
-    }
-    if (!formData.destinationCity.trim()) {
-      newErrors.destinationCity = 'City is required'
+    if (!formData.destination) {
+      newErrors.destination = 'Destination city is required'
     }
     if (!formData.duration || parseInt(formData.duration) < 1) {
       newErrors.duration = 'Duration must be at least 1 day'
@@ -60,8 +56,12 @@ export default function Home() {
     try {
       // Store trip data and navigate to packing list
       const tripData = {
-        ...formData,
+        destinationCountry: formData.destination!.country,
+        destinationCity: formData.destination!.name,
+        destinationState: formData.destination!.admin1,
+        destinationDisplayName: formData.destination!.displayName,
         duration: parseInt(formData.duration),
+        tripType: formData.tripType,
       }
       
       // Store in localStorage for now (in production, save to Supabase)
@@ -82,6 +82,14 @@ export default function Home() {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }, [errors])
+
+  const handleDestinationChange = useCallback((destination: CityOption | null) => {
+    setFormData(prev => ({ ...prev, destination }))
+    // Clear error when user selects a destination
+    if (errors.destination) {
+      setErrors(prev => ({ ...prev, destination: '' }))
+    }
+  }, [errors.destination])
 
   const durationOptions = useMemo(() => [
     { value: '', label: 'Select duration' },
@@ -134,22 +142,13 @@ export default function Home() {
                   <MapPin className="w-4 h-4 text-blue-600" />
                   <span className="text-sm font-medium text-gray-800">Destination</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    placeholder="Country"
-                    value={formData.destinationCountry}
-                    onChange={(e) => handleInputChange('destinationCountry', e.target.value)}
-                    error={errors.destinationCountry}
-                    className="bg-white border-gray-300 rounded-md"
-                  />
-                  <Input
-                    placeholder="City"
-                    value={formData.destinationCity}
-                    onChange={(e) => handleInputChange('destinationCity', e.target.value)}
-                    error={errors.destinationCity}
-                    className="bg-white border-gray-300 rounded-md"
-                  />
-                </div>
+                <CitySearchInput
+                  value={formData.destination}
+                  onChange={handleDestinationChange}
+                  placeholder="Search for your destination city..."
+                  error={errors.destination}
+                  className="bg-white border-gray-300 rounded-md"
+                />
               </div>
 
               {/* Duration */}
