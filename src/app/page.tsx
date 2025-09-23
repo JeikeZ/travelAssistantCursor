@@ -146,7 +146,7 @@ export default function Home() {
                 </div>
                 <Select
                   options={[
-                    { value: '', label: 'Value' },
+                    { value: '', label: 'Select duration' },
                     { value: '1', label: '1 day' },
                     { value: '2', label: '2 days' },
                     { value: '3', label: '3 days' },
@@ -173,7 +173,7 @@ export default function Home() {
                 </div>
                 <Select
                   options={[
-                    { value: '', label: 'Value' },
+                    { value: '', label: 'Select trip type' },
                     ...tripTypes.slice(1)
                   ]}
                   value={formData.tripType}
