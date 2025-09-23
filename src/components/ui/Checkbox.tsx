@@ -20,7 +20,7 @@ export function Checkbox({ className, label, ...props }: CheckboxProps) {
             'w-5 h-5 border-2 rounded flex items-center justify-center transition-all',
             props.checked
               ? 'bg-blue-600 border-blue-600'
-              : 'border-gray-300 hover:border-blue-400',
+              : 'border-gray-300 hover:border-blue-400 dark:border-gray-600 dark:hover:border-blue-400',
             className
           )}
         >
@@ -30,7 +30,7 @@ export function Checkbox({ className, label, ...props }: CheckboxProps) {
         </div>
       </div>
       {label && (
-        <span className="text-sm text-slate-800 select-none">
+        <span className="text-sm text-slate-800 select-none dark:text-gray-200">
           {label}
         </span>
       )}

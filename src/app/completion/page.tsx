@@ -211,7 +211,7 @@ export default function CompletionPage() {
                 <CardContent className="space-y-6">
                   {/* Confidence Score */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-800 mb-3">
+                    <label className="block text-sm font-medium text-slate-800 dark:text-gray-200 mb-3">
                       How confident do you feel about your packing? (1-10)
                     </label>
                     <div className="flex space-x-2">
@@ -222,7 +222,7 @@ export default function CompletionPage() {
                           className={`w-10 h-10 rounded-lg border-2 font-medium transition-all ${
                             feedback.confidenceScore === score
                               ? 'bg-blue-600 text-white border-blue-600'
-                              : 'border-gray-300 text-gray-900 hover:border-blue-400 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800'
+                              : 'border-gray-300 text-gray-900 hover:border-blue-400 hover:bg-gray-50 hover:text-gray-900 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-100'
                           }`}
                         >
                           {score}
@@ -233,7 +233,7 @@ export default function CompletionPage() {
 
                   {/* Recommendation */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-800 mb-3">
+                    <label className="block text-sm font-medium text-slate-800 dark:text-gray-200 mb-3">
                       Would you recommend this service to a friend or family member?
                     </label>
                     <div className="flex space-x-4">
@@ -257,7 +257,7 @@ export default function CompletionPage() {
 
                   {/* Missing Items */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-800 mb-2">
+                    <label className="block text-sm font-medium text-slate-800 dark:text-gray-200 mb-2">
                       Was there anything we forgot that you would have liked to bring?
                     </label>
                     <Input
@@ -269,11 +269,11 @@ export default function CompletionPage() {
 
                   {/* Additional Feedback */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-800 mb-2">
+                    <label className="block text-sm font-medium text-slate-800 dark:text-gray-200 mb-2">
                       Any additional feedback? (optional)
                     </label>
                     <textarea
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none text-slate-900 placeholder:text-slate-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none text-slate-900 placeholder:text-slate-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder:text-gray-400"
                       rows={3}
                       placeholder="Tell us how we can improve..."
                       value={feedback.additionalFeedback}
