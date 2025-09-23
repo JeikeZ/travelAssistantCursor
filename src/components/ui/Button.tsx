@@ -21,8 +21,8 @@ export function Button({
         {
           'bg-blue-600 text-white hover:bg-blue-700 shadow-md': variant === 'primary',
           'bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600': variant === 'secondary',
-          'border border-gray-300 bg-transparent text-gray-900 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-100': variant === 'outline',
-          'text-gray-900 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-100': variant === 'ghost',
+          'border border-gray-300 bg-white text-black hover:bg-gray-50 hover:text-black dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-100': variant === 'outline',
+          'text-black hover:bg-gray-100 hover:text-black dark:text-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-100': variant === 'ghost',
         },
         {
           'h-8 px-3 text-sm': size === 'sm',
