@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { WeatherForecast } from '@/components/ui/WeatherForecast'
 import { PackingItem } from '@/lib/openai'
 
 const categories = [
@@ -212,188 +213,205 @@ export default function PackingListPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Progress */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
-            <ProgressBar
-              value={packedItems}
-              max={totalItems}
-              showPercentage={true}
-            />
-            <div className="flex justify-between text-sm text-slate-700 mt-2">
-              <span>{packedItems} of {totalItems} items packed</span>
-              <span>
-                {progress === 100 ? (
-                  <span className="text-green-600 font-medium">Ready to go! 🎉</span>
-                ) : (
-                  `${Math.round(progress)}% complete`
-                )}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Add Item */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            {!isAddingItem ? (
-              <Button
-                variant="outline"
-                onClick={() => setIsAddingItem(true)}
-                className="w-full flex items-center justify-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Custom Item</span>
-              </Button>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input
-                    placeholder="Item name"
-                    value={newItem.name}
-                    onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
-                  />
-                  <Select
-                    options={categories}
-                    value={newItem.category}
-                    onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
-                  />
-                  <div className="flex items-center space-x-4">
-                    <Checkbox
-                      checked={newItem.essential}
-                      onChange={(e) => setNewItem(prev => ({ ...prev, essential: e.target.checked }))}
-                      label="Essential"
-                    />
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button onClick={addCustomItem} disabled={!newItem.name.trim()}>
-                    Add Item
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsAddingItem(false)
-                      setNewItem({ name: '', category: 'miscellaneous', essential: false })
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Weather Forecast - Left Side */}
+          <div className="lg:col-span-1">
+            {tripData && (
+              <div className="sticky top-8">
+                <WeatherForecast 
+                  city={tripData.destinationCity}
+                  country={tripData.destinationCountry}
+                />
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Packing List by Category */}
-        <div className="space-y-6">
-          {sortedCategories.map((category) => (
-            <Card key={category}>
-              <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900 capitalize">
-                  {getCategoryLabel(category)}
-                  <span className="ml-2 text-sm font-normal text-slate-600">
-                    ({groupedItems[category].filter(item => item.packed).length}/{groupedItems[category].length})
+          {/* Packing List - Right Side */}
+          <div className="lg:col-span-2">
+            {/* Progress */}
+            <Card className="mb-8">
+              <CardContent className="pt-6">
+                <ProgressBar
+                  value={packedItems}
+                  max={totalItems}
+                  showPercentage={true}
+                />
+                <div className="flex justify-between text-sm text-slate-700 mt-2">
+                  <span>{packedItems} of {totalItems} items packed</span>
+                  <span>
+                    {progress === 100 ? (
+                      <span className="text-green-600 font-medium">Ready to go! 🎉</span>
+                    ) : (
+                      `${Math.round(progress)}% complete`
+                    )}
                   </span>
-                </h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {groupedItems[category]
-                    .sort((a, b) => {
-                      // Sort essential items first
-                      if (a.essential && !b.essential) return -1
-                      if (!a.essential && b.essential) return 1
-                      return a.name.localeCompare(b.name)
-                    })
-                    .map((item) => (
-                      <div
-                        key={item.id}
-                        className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
-                          item.packed
-                            ? 'bg-green-50 border-green-200'
-                            : item.essential
-                            ? 'bg-orange-50 border-orange-200'
-                            : 'bg-white border-gray-200'
-                        }`}
-                      >
-                        <Checkbox
-                          checked={item.packed}
-                          onChange={() => toggleItemPacked(item.id)}
-                        />
-                        
-                        {item.essential && (
-                          <Star className="w-4 h-4 text-orange-500 fill-current" />
-                        )}
-                        
-                        <div className="flex-1">
-                          {editingItem === item.id ? (
-                            <Input
-                              defaultValue={item.name}
-                              onBlur={(e) => editItem(item.id, e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  editItem(item.id, e.currentTarget.value)
-                                } else if (e.key === 'Escape') {
-                                  setEditingItem(null)
-                                }
-                              }}
-                              autoFocus
-                            />
-                          ) : (
-                            <span
-                              className={`${
-                                item.packed ? 'line-through text-slate-600' : 'text-slate-900'
-                              }`}
-                            >
-                              {item.name}
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="flex space-x-1">
-                          {item.custom && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setEditingItem(item.id)}
-                              >
-                                <Edit3 className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deleteItem(item.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    ))}
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
 
-        {/* Complete Button */}
-        {progress === 100 && (
-          <div className="mt-8 text-center">
-            <Button
-              size="lg"
-              onClick={handleFinishPacking}
-              className="px-8"
-            >
-              <CheckCircle className="w-5 h-5 mr-2" />
-              I&apos;m Ready to Go!
-            </Button>
+            {/* Add Item */}
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                {!isAddingItem ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddingItem(true)}
+                    className="w-full flex items-center justify-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Custom Item</span>
+                  </Button>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Input
+                        placeholder="Item name"
+                        value={newItem.name}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
+                      />
+                      <Select
+                        options={categories}
+                        value={newItem.category}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
+                      />
+                      <div className="flex items-center space-x-4">
+                        <Checkbox
+                          checked={newItem.essential}
+                          onChange={(e) => setNewItem(prev => ({ ...prev, essential: e.target.checked }))}
+                          label="Essential"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button onClick={addCustomItem} disabled={!newItem.name.trim()}>
+                        Add Item
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsAddingItem(false)
+                          setNewItem({ name: '', category: 'miscellaneous', essential: false })
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Packing List by Category */}
+            <div className="space-y-6">
+              {sortedCategories.map((category) => (
+                <Card key={category}>
+                  <CardHeader>
+                    <h3 className="text-lg font-semibold text-gray-900 capitalize">
+                      {getCategoryLabel(category)}
+                      <span className="ml-2 text-sm font-normal text-slate-600">
+                        ({groupedItems[category].filter(item => item.packed).length}/{groupedItems[category].length})
+                      </span>
+                    </h3>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {groupedItems[category]
+                        .sort((a, b) => {
+                          // Sort essential items first
+                          if (a.essential && !b.essential) return -1
+                          if (!a.essential && b.essential) return 1
+                          return a.name.localeCompare(b.name)
+                        })
+                        .map((item) => (
+                          <div
+                            key={item.id}
+                            className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
+                              item.packed
+                                ? 'bg-green-50 border-green-200'
+                                : item.essential
+                                ? 'bg-orange-50 border-orange-200'
+                                : 'bg-white border-gray-200'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={item.packed}
+                              onChange={() => toggleItemPacked(item.id)}
+                            />
+                            
+                            {item.essential && (
+                              <Star className="w-4 h-4 text-orange-500 fill-current" />
+                            )}
+                            
+                            <div className="flex-1">
+                              {editingItem === item.id ? (
+                                <Input
+                                  defaultValue={item.name}
+                                  onBlur={(e) => editItem(item.id, e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      editItem(item.id, e.currentTarget.value)
+                                    } else if (e.key === 'Escape') {
+                                      setEditingItem(null)
+                                    }
+                                  }}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span
+                                  className={`${
+                                    item.packed ? 'line-through text-slate-600' : 'text-slate-900'
+                                  }`}
+                                >
+                                  {item.name}
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className="flex space-x-1">
+                              {item.custom && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setEditingItem(item.id)}
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => deleteItem(item.id)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Complete Button */}
+            {progress === 100 && (
+              <div className="mt-8 text-center">
+                <Button
+                  size="lg"
+                  onClick={handleFinishPacking}
+                  className="px-8"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  I&apos;m Ready to Go!
+                </Button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   )
