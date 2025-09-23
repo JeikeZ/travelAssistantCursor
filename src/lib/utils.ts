@@ -5,6 +5,39 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Commonly used CSS class combinations for better performance
+export const commonStyles = {
+  card: 'bg-white rounded-lg border border-gray-200 shadow-sm',
+  cardHover: 'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow',
+  button: {
+    base: 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-md',
+    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300',
+    outline: 'border border-gray-300 bg-white text-black hover:bg-gray-50',
+    ghost: 'text-black hover:bg-gray-100'
+  },
+  input: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors',
+  gradientBackground: 'min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50',
+  centerContent: 'flex items-center justify-center',
+  spacingY: {
+    sm: 'space-y-2',
+    md: 'space-y-4',
+    lg: 'space-y-6'
+  },
+  spacingX: {
+    sm: 'space-x-2',
+    md: 'space-x-4',
+    lg: 'space-x-6'
+  },
+  text: {
+    heading: 'text-xl font-semibold text-gray-900',
+    subheading: 'text-lg font-medium text-gray-800',
+    body: 'text-slate-700',
+    muted: 'text-slate-600',
+    small: 'text-sm text-slate-600'
+  }
+}
+
 // Weather types
 export interface WeatherForecast {
   date: string

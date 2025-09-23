@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { MapPin, Calendar, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -30,7 +30,7 @@ export default function Home() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {}
     
     if (!formData.destinationCountry.trim()) {
@@ -48,7 +48,7 @@ export default function Home() {
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }
+  }, [formData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,13 +75,27 @@ export default function Home() {
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
-  }
+  }, [errors])
+
+  const durationOptions = useMemo(() => [
+    { value: '', label: 'Select duration' },
+    { value: '1', label: '1 day' },
+    { value: '2', label: '2 days' },
+    { value: '3', label: '3 days' },
+    { value: '4', label: '4 days' },
+    { value: '5', label: '5 days' },
+    { value: '6', label: '6 days' },
+    { value: '7', label: '1 week' },
+    { value: '14', label: '2 weeks' },
+    { value: '21', label: '3 weeks' },
+    { value: '30', label: '1 month' },
+  ], [])
 
   return (
     <div className="min-h-screen bg-gray-200">
@@ -145,19 +159,7 @@ export default function Home() {
                   <span className="text-sm font-medium text-gray-800">Trip Duration</span>
                 </div>
                 <Select
-                  options={[
-                    { value: '', label: 'Select duration' },
-                    { value: '1', label: '1 day' },
-                    { value: '2', label: '2 days' },
-                    { value: '3', label: '3 days' },
-                    { value: '4', label: '4 days' },
-                    { value: '5', label: '5 days' },
-                    { value: '6', label: '6 days' },
-                    { value: '7', label: '1 week' },
-                    { value: '14', label: '2 weeks' },
-                    { value: '21', label: '3 weeks' },
-                    { value: '30', label: '1 month' },
-                  ]}
+                  options={durationOptions}
                   value={formData.duration}
                   onChange={(e) => handleInputChange('duration', e.target.value)}
                   error={errors.duration}

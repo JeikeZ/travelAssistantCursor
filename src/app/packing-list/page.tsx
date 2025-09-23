@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Plus, 
@@ -16,8 +16,12 @@ import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { WeatherForecast } from '@/components/ui/WeatherForecast'
 import { PackingItem } from '@/lib/openai'
+
+// Lazy load WeatherForecast component
+const WeatherForecast = lazy(() => 
+  import('@/components/ui/WeatherForecast').then(module => ({ default: module.WeatherForecast }))
+)
 
 const categories = [
   { value: 'clothing', label: 'Clothing' },
@@ -46,6 +50,55 @@ export default function PackingListPage() {
   })
   const [editingItem, setEditingItem] = useState<string | null>(null)
 
+  const generatePackingList = useCallback(async (tripData: {
+    destinationCountry: string
+    destinationCity: string
+    duration: number
+    tripType: string
+  }) => {
+    try {
+      const response = await fetch('/api/generate-packing-list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tripData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      if (!data.packingList || !Array.isArray(data.packingList)) {
+        throw new Error('Invalid packing list data received')
+      }
+      
+      setPackingList(data.packingList)
+      localStorage.setItem('currentPackingList', JSON.stringify(data.packingList))
+    } catch (error) {
+      console.error('Error generating packing list:', error)
+      
+      // Show user-friendly error and fallback to basic list
+      const basicList = [
+        { id: 'fallback-1', name: 'Passport', category: 'travel_documents', essential: true, packed: false, custom: false },
+        { id: 'fallback-2', name: 'Phone Charger', category: 'electronics', essential: true, packed: false, custom: false },
+        { id: 'fallback-3', name: 'Medications', category: 'medication', essential: true, packed: false, custom: false },
+        { id: 'fallback-4', name: 'Underwear', category: 'clothing', essential: false, packed: false, custom: false },
+        { id: 'fallback-5', name: 'Toothbrush', category: 'toiletries', essential: false, packed: false, custom: false },
+      ]
+      
+      setPackingList(basicList)
+      localStorage.setItem('currentPackingList', JSON.stringify(basicList))
+      
+      // You could show a toast notification here in a real app
+      alert('We had trouble generating a custom packing list, but we\'ve provided a basic one to get you started!')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     // Get trip data from localStorage
     const storedTripData = localStorage.getItem('currentTrip')
@@ -66,51 +119,38 @@ export default function PackingListPage() {
       // Generate new packing list
       generatePackingList(parsedTripData)
     }
-  }, [router])
 
-  const generatePackingList = async (tripData: {
-    destinationCountry: string
-    destinationCity: string
-    duration: number
-    tripType: string
-  }) => {
-    try {
-      const response = await fetch('/api/generate-packing-list', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(tripData),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate packing list')
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
       }
-
-      const data = await response.json()
-      setPackingList(data.packingList)
-      localStorage.setItem('currentPackingList', JSON.stringify(data.packingList))
-    } catch (error) {
-      console.error('Error generating packing list:', error)
-      // Show fallback message or default list
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [router, generatePackingList])
 
-  const updatePackingList = (updatedList: PackingItem[]) => {
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  const updatePackingList = useCallback((updatedList: PackingItem[]) => {
     setPackingList(updatedList)
-    localStorage.setItem('currentPackingList', JSON.stringify(updatedList))
-  }
+    
+    // Debounce localStorage operations to reduce frequency
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem('currentPackingList', JSON.stringify(updatedList))
+    }, 300) // Save after 300ms of inactivity
+  }, [])
 
-  const toggleItemPacked = (itemId: string) => {
+  const toggleItemPacked = useCallback((itemId: string) => {
     const updatedList = packingList.map(item =>
       item.id === itemId ? { ...item, packed: !item.packed } : item
     )
     updatePackingList(updatedList)
-  }
+  }, [packingList, updatePackingList])
 
-  const addCustomItem = () => {
+  const addCustomItem = useCallback(() => {
     if (!newItem.name.trim()) return
 
     const customItem: PackingItem = {
@@ -127,51 +167,82 @@ export default function PackingListPage() {
 
     setNewItem({ name: '', category: 'miscellaneous', essential: false })
     setIsAddingItem(false)
-  }
+  }, [newItem, packingList, updatePackingList])
 
-  const deleteItem = (itemId: string) => {
+  const deleteItem = useCallback((itemId: string) => {
     const updatedList = packingList.filter(item => item.id !== itemId)
     updatePackingList(updatedList)
-  }
+  }, [packingList, updatePackingList])
 
-  const editItem = (itemId: string, newName: string) => {
+  const editItem = useCallback((itemId: string, newName: string) => {
     const updatedList = packingList.map(item =>
       item.id === itemId ? { ...item, name: newName } : item
     )
     updatePackingList(updatedList)
     setEditingItem(null)
-  }
+  }, [packingList, updatePackingList])
 
   // Calculate progress
-  const totalItems = packingList.length
-  const packedItems = packingList.filter(item => item.packed).length
-  const progress = totalItems > 0 ? (packedItems / totalItems) * 100 : 0
-
-  // Group items by category
-  const groupedItems = packingList.reduce((groups, item) => {
-    if (!groups[item.category]) {
-      groups[item.category] = []
+  const { totalItems, packedItems, progress } = useMemo(() => {
+    const total = packingList.length
+    const packed = packingList.filter(item => item.packed).length
+    return {
+      totalItems: total,
+      packedItems: packed,
+      progress: total > 0 ? (packed / total) * 100 : 0
     }
-    groups[item.category].push(item)
-    return groups
-  }, {} as Record<string, PackingItem[]>)
+  }, [packingList])
 
-  // Sort categories to show essential items first
-  const sortedCategories = Object.keys(groupedItems).sort((a, b) => {
-    const aHasEssential = groupedItems[a].some(item => item.essential)
-    const bHasEssential = groupedItems[b].some(item => item.essential)
-    if (aHasEssential && !bHasEssential) return -1
-    if (!aHasEssential && bHasEssential) return 1
-    return a.localeCompare(b)
-  })
+  // Optimized grouping and sorting with single pass
+  const { groupedItems, sortedCategories } = useMemo(() => {
+    const groups: Record<string, PackingItem[]> = {}
+    const categoryEssentialMap = new Map<string, boolean>()
+    
+    // Single pass through items to group and track essential status
+    packingList.forEach(item => {
+      if (!groups[item.category]) {
+        groups[item.category] = []
+        categoryEssentialMap.set(item.category, false)
+      }
+      groups[item.category].push(item)
+      
+      // Track if category has essential items
+      if (item.essential && !categoryEssentialMap.get(item.category)) {
+        categoryEssentialMap.set(item.category, true)
+      }
+    })
+    
+    // Sort items within each category once (essential first, then alphabetical)
+    Object.keys(groups).forEach(category => {
+      groups[category].sort((a, b) => {
+        if (a.essential && !b.essential) return -1
+        if (!a.essential && b.essential) return 1
+        return a.name.localeCompare(b.name)
+      })
+    })
+    
+    // Sort categories efficiently
+    const sortedCats = Object.keys(groups).sort((a, b) => {
+      const aHasEssential = categoryEssentialMap.get(a)
+      const bHasEssential = categoryEssentialMap.get(b)
+      if (aHasEssential && !bHasEssential) return -1
+      if (!aHasEssential && bHasEssential) return 1
+      return a.localeCompare(b)
+    })
+    
+    return {
+      groupedItems: groups,
+      sortedCategories: sortedCats
+    }
+  }, [packingList])
 
-  const getCategoryLabel = (category: string) => {
+  const getCategoryLabel = useCallback((category: string) => {
     return categories.find(cat => cat.value === category)?.label || category
-  }
+  }, [])
 
-  const handleFinishPacking = () => {
+  const handleFinishPacking = useCallback(() => {
     router.push('/completion')
-  }
+  }, [router])
 
   if (isLoading) {
     return (
@@ -219,10 +290,24 @@ export default function PackingListPage() {
           <div className="lg:col-span-1">
             {tripData && (
               <div className="sticky top-8">
-                <WeatherForecast 
-                  city={tripData.destinationCity}
-                  country={tripData.destinationCountry}
-                />
+                <Suspense fallback={
+                  <Card className="w-full">
+                    <CardHeader>
+                      <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <span className="ml-2 text-slate-600">Loading weather...</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                }>
+                  <WeatherForecast 
+                    city={tripData.destinationCity}
+                    country={tripData.destinationCountry}
+                  />
+                </Suspense>
               </div>
             )}
           </div>
@@ -316,14 +401,7 @@ export default function PackingListPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {groupedItems[category]
-                        .sort((a, b) => {
-                          // Sort essential items first
-                          if (a.essential && !b.essential) return -1
-                          if (!a.essential && b.essential) return 1
-                          return a.name.localeCompare(b.name)
-                        })
-                        .map((item) => (
+                      {groupedItems[category].map((item) => (
                           <div
                             key={item.id}
                             className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${

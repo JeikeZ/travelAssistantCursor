@@ -1,8 +1,15 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let openai: OpenAI | null = null
+
+function getOpenAIClient() {
+  if (!openai && process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+  }
+  return openai
+}
 
 export interface TripData {
   destinationCountry: string
@@ -22,6 +29,11 @@ export interface PackingItem {
 
 export async function generatePackingList(tripData: TripData): Promise<PackingItem[]> {
   try {
+    const client = getOpenAIClient()
+    if (!client) {
+      throw new Error('OpenAI client not available')
+    }
+
     const prompt = `Generate a comprehensive packing list for a ${tripData.duration}-day ${tripData.tripType} trip to ${tripData.destinationCity}, ${tripData.destinationCountry}.
 
 Please return a JSON array of items with the following structure for each item:
@@ -52,7 +64,7 @@ Mark items as essential if they are critical for travel (passport, medication, p
 
 Return only the JSON array, no additional text.`
 
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
         {
