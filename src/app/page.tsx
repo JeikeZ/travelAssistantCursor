@@ -187,7 +187,7 @@ export default function Home() {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg mt-6"
+                className="w-full bg-[#1E8FEB] hover:bg-[#1A7DD4] text-white font-semibold py-3 rounded-lg mt-6"
                 disabled={isLoading}
               >
                 {isLoading ? 'Generating Your Packing List...' : 'Create My Packing List!'}
