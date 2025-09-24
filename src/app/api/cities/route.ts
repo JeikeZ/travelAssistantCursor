@@ -63,12 +63,21 @@ async function searchCities(query: string): Promise<CityResult[]> {
       return []
     }
     
-    // Filter and format results to only include cities/towns
+    // Filter and format results to only include major cities
     const cities: CityResult[] = data.results
       .filter(result => {
-        // Filter for cities, towns, and populated places
-        const cityFeatureCodes = ['PPL', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPLC', 'PPLS']
-        return cityFeatureCodes.some(code => result.feature_code.startsWith(code))
+        // Filter for major cities only - exclude towns and smaller populated places
+        // PPLC: capital of a political entity (national/regional capitals)
+        // PPLA: seat of a first-order administrative division (state/province capitals)
+        // PPLA2: seat of a second-order administrative division (major regional cities)
+        const majorCityFeatureCodes = ['PPLC', 'PPLA', 'PPLA2']
+        const hasValidFeatureCode = majorCityFeatureCodes.includes(result.feature_code)
+        
+        // Also filter by population if available - only include places with 50,000+ population
+        // This helps exclude smaller towns that might have administrative importance
+        const hasSignificantPopulation = !result.population || result.population >= 50000
+        
+        return hasValidFeatureCode && hasSignificantPopulation
       })
       .map(result => {
         // Create display name with city, state/province, country
@@ -94,8 +103,19 @@ async function searchCities(query: string): Promise<CityResult[]> {
       .filter((city, index, arr) => 
         arr.findIndex(c => c.displayName === city.displayName) === index
       )
-      // Sort by population (if available) or alphabetically
-      .sort((a, b) => a.displayName.localeCompare(b.displayName))
+      // Sort by population (if available, larger cities first) then alphabetically
+      .sort((a, b) => {
+        // If both have population data, sort by population (descending)
+        if (data.results) {
+          const aPopulation = data.results.find(r => r.id.toString() === a.id)?.population || 0
+          const bPopulation = data.results.find(r => r.id.toString() === b.id)?.population || 0
+          if (aPopulation && bPopulation && aPopulation !== bPopulation) {
+            return bPopulation - aPopulation
+          }
+        }
+        // Fall back to alphabetical sorting
+        return a.displayName.localeCompare(b.displayName)
+      })
     
     // Cache the result
     citySearchCache.set(cacheKey, { data: cities, timestamp: Date.now() })
