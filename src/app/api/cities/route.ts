@@ -50,7 +50,7 @@ async function searchCities(query: string): Promise<CityResult[]> {
   
   try {
     // Use Open-Meteo geocoding API (same as weather API)
-    const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=20&language=en&format=json`
+    const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=50&language=en&format=json`
     
     const response = await fetch(geocodingUrl)
     if (!response.ok) {
@@ -63,22 +63,58 @@ async function searchCities(query: string): Promise<CityResult[]> {
       return []
     }
     
-    // Filter and format results to only include major cities
-    const cities: CityResult[] = data.results
-      .filter(result => {
-        // Filter for major cities only - exclude towns and smaller populated places
-        // PPLC: capital of a political entity (national/regional capitals)
-        // PPLA: seat of a first-order administrative division (state/province capitals)
-        // PPLA2: seat of a second-order administrative division (major regional cities)
+    // Check if the first result is a country (PCLI feature code)
+    const firstResult = data.results[0]
+    const isCountrySearch = firstResult.feature_code === 'PCLI' && 
+                           firstResult.name.toLowerCase() === query.toLowerCase().trim()
+    
+    let filteredResults = data.results
+    
+    if (isCountrySearch) {
+      // If user searched for a country, return major cities from that country
+      const countryName = firstResult.country
+      filteredResults = data.results.filter(result => {
+        // Include major cities from the same country
+        const majorCityFeatureCodes = ['PPLC', 'PPLA', 'PPLA2']
+        const isMajorCity = majorCityFeatureCodes.includes(result.feature_code)
+        const isFromSameCountry = result.country === countryName
+        const hasSignificantPopulation = !result.population || result.population >= 100000 // Higher threshold for country searches
+        
+        return isMajorCity && isFromSameCountry && hasSignificantPopulation && result.feature_code !== 'PCLI'
+      })
+      
+      // If we don't have enough major cities, get additional cities with lower population threshold
+      if (filteredResults.length < 10) {
+        const additionalCities = data.results.filter(result => {
+          const majorCityFeatureCodes = ['PPLC', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4']
+          const isMajorCity = majorCityFeatureCodes.includes(result.feature_code)
+          const isFromSameCountry = result.country === countryName
+          const hasSignificantPopulation = !result.population || result.population >= 50000
+          
+          return isMajorCity && isFromSameCountry && hasSignificantPopulation && result.feature_code !== 'PCLI'
+        })
+        
+        // Merge and deduplicate
+        const allCityIds = new Set(filteredResults.map(r => r.id))
+        additionalCities.forEach(city => {
+          if (!allCityIds.has(city.id)) {
+            filteredResults.push(city)
+          }
+        })
+      }
+    } else {
+      // Regular city search - filter for major cities only
+      filteredResults = data.results.filter(result => {
         const majorCityFeatureCodes = ['PPLC', 'PPLA', 'PPLA2']
         const hasValidFeatureCode = majorCityFeatureCodes.includes(result.feature_code)
-        
-        // Also filter by population if available - only include places with 50,000+ population
-        // This helps exclude smaller towns that might have administrative importance
         const hasSignificantPopulation = !result.population || result.population >= 50000
         
         return hasValidFeatureCode && hasSignificantPopulation
       })
+    }
+    
+    // Format results
+    const cities: CityResult[] = filteredResults
       .map(result => {
         // Create display name with city, state/province, country
         let displayName = result.name
@@ -116,6 +152,8 @@ async function searchCities(query: string): Promise<CityResult[]> {
         // Fall back to alphabetical sorting
         return a.displayName.localeCompare(b.displayName)
       })
+      // Limit results for better UX
+      .slice(0, isCountrySearch ? 20 : 15)
     
     // Cache the result
     citySearchCache.set(cacheKey, { data: cities, timestamp: Date.now() })

@@ -145,7 +145,7 @@ export default function Home() {
                 <CitySearchInput
                   value={formData.destination}
                   onChange={handleDestinationChange}
-                  placeholder="Search for your destination city..."
+                  placeholder="Search for your destination city or country..."
                   error={errors.destination}
                   className="bg-white border-gray-300 rounded-md"
                 />
