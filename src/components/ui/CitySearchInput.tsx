@@ -227,10 +227,23 @@ export function CitySearchInput({
           
           {options.length > 0 && inputValue.trim().length >= 2 && (
             <div className="px-4 py-2 text-xs text-blue-600 bg-blue-50 border-b border-blue-100">
-              {options.length > 10 ? 
-                `Showing major cities for "${inputValue}"` : 
-                `Found ${options.length} cities matching "${inputValue}"`
-              }
+              {(() => {
+                // Check if this might be a country search by looking at the results
+                const queryLower = inputValue.toLowerCase().trim()
+                const allFromSameCountry = options.every(option => 
+                  option.country.toLowerCase() === queryLower || 
+                  options[0].country === option.country
+                )
+                
+                if (allFromSameCountry && options.length > 3) {
+                  const countryName = options[0].country
+                  return `Cities in ${countryName} matching "${inputValue}"`
+                }
+                
+                return options.length > 10 ? 
+                  `Showing major cities for "${inputValue}"` : 
+                  `Found ${options.length} cities matching "${inputValue}"`
+              })()}
             </div>
           )}
           
