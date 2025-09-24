@@ -27,7 +27,7 @@ interface CitySearchInputProps {
 export function CitySearchInput({
   value,
   onChange,
-  placeholder = "Search for a city...",
+  placeholder = "Search for a city or country...",
   error,
   className,
   disabled = false
@@ -222,6 +222,15 @@ export function CitySearchInput({
             <div className="px-4 py-3 text-sm text-gray-500 text-center">
               <Search className="h-4 w-4 mx-auto mb-2 text-gray-400" />
               No cities found for &ldquo;{inputValue}&rdquo;
+            </div>
+          )}
+          
+          {options.length > 0 && inputValue.trim().length >= 2 && (
+            <div className="px-4 py-2 text-xs text-blue-600 bg-blue-50 border-b border-blue-100">
+              {options.length > 10 ? 
+                `Showing major cities for "${inputValue}"` : 
+                `Found ${options.length} cities matching "${inputValue}"`
+              }
             </div>
           )}
           
