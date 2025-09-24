@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { MapPin, ChevronDown, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useDebouncedCallback } from '@/hooks/useDebounce'
 
 export interface CityOption {
   id: string
@@ -24,7 +25,7 @@ interface CitySearchInputProps {
   disabled?: boolean
 }
 
-export function CitySearchInput({
+function CitySearchInputComponent({
   value,
   onChange,
   placeholder = "Search for a city or country...",
@@ -40,18 +41,29 @@ export function CitySearchInput({
   
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const debounceRef = useRef<NodeJS.Timeout | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
   
-  // Handle search with debouncing
+  // Handle search with abort controller for cleanup
   const searchCities = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
       setOptions([])
       return
     }
     
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    
+    // Create new abort controller
+    abortControllerRef.current = new AbortController()
+    
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/cities?q=${encodeURIComponent(query.trim())}`)
+      const response = await fetch(`/api/cities?q=${encodeURIComponent(query.trim())}`, {
+        signal: abortControllerRef.current.signal
+      })
+      
       if (!response.ok) {
         throw new Error('Failed to search cities')
       }
@@ -59,23 +71,17 @@ export function CitySearchInput({
       const data = await response.json()
       setOptions(data.cities || [])
     } catch (error) {
-      console.error('Error searching cities:', error)
-      setOptions([])
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error searching cities:', error)
+        setOptions([])
+      }
     } finally {
       setIsLoading(false)
     }
   }, [])
   
-  // Debounced search
-  const debouncedSearch = useCallback((query: string) => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
-    }
-    
-    debounceRef.current = setTimeout(() => {
-      searchCities(query)
-    }, 300)
-  }, [searchCities])
+  // Debounced search using custom hook
+  const [debouncedSearch] = useDebouncedCallback(searchCities, 300)
   
   // Handle input change
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,11 +171,11 @@ export function CitySearchInput({
     setInputValue(value?.displayName || '')
   }, [value])
   
-  // Cleanup debounce on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current)
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
       }
     }
   }, [])
@@ -281,3 +287,5 @@ export function CitySearchInput({
     </div>
   )
 }
+
+export const CitySearchInput = memo(CitySearchInputComponent)

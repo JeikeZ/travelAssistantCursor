@@ -2,11 +2,18 @@ import OpenAI from 'openai'
 
 let openai: OpenAI | null = null
 
-function getOpenAIClient() {
+function getOpenAIClient(): OpenAI | null {
   if (!openai && process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
+    try {
+      openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        timeout: 30000, // 30 seconds
+        maxRetries: 2,
+      })
+    } catch (error) {
+      console.error('Failed to initialize OpenAI client:', error)
+      return null
+    }
   }
   return openai
 }
@@ -17,23 +24,39 @@ export interface TripData {
   destinationState?: string
   destinationDisplayName?: string
   duration: number
-  tripType: string
+  tripType: 'business' | 'leisure' | 'beach' | 'hiking' | 'city' | 'winter' | 'backpacking'
 }
 
 export interface PackingItem {
   id: string
   name: string
-  category: string
+  category: 'clothing' | 'toiletries' | 'electronics' | 'travel_documents' | 'medication' | 'miscellaneous'
   essential: boolean
   packed: boolean
   custom: boolean
+}
+
+export interface PackingListResponse {
+  items: Omit<PackingItem, 'id' | 'packed' | 'custom'>[]
+}
+
+export class PackingListError extends Error {
+  constructor(message: string, public readonly code: string) {
+    super(message)
+    this.name = 'PackingListError'
+  }
 }
 
 export async function generatePackingList(tripData: TripData): Promise<PackingItem[]> {
   try {
     const client = getOpenAIClient()
     if (!client) {
-      throw new Error('OpenAI client not available')
+      throw new PackingListError('OpenAI service is not available', 'SERVICE_UNAVAILABLE')
+    }
+
+    // Validate input
+    if (!tripData.destinationCountry || !tripData.destinationCity || !tripData.duration || !tripData.tripType) {
+      throw new PackingListError('Missing required trip information', 'INVALID_INPUT')
     }
 
     const locationString = tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`
@@ -72,7 +95,7 @@ Return only the JSON array, no additional text.`
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful travel assistant that generates comprehensive, location-specific packing lists. Always respond with valid JSON only.',
+          content: 'You are a helpful travel assistant that generates comprehensive, location-specific packing lists. Always respond with valid JSON only. Ensure the response is an array of objects with name, category, and essential fields.',
         },
         {
           role: 'user',
@@ -83,18 +106,34 @@ Return only the JSON array, no additional text.`
       max_tokens: 2000,
     })
 
-    const content = response.choices[0]?.message?.content
+    const content = response.choices[0]?.message?.content?.trim()
     if (!content) {
-      throw new Error('No response from OpenAI')
+      throw new PackingListError('Empty response from AI service', 'EMPTY_RESPONSE')
     }
 
-    // Parse the JSON response
+    // Parse the JSON response with better error handling
     let items: Omit<PackingItem, 'id' | 'packed' | 'custom'>[]
     try {
-      items = JSON.parse(content)
-    } catch {
+      const parsed = JSON.parse(content)
+      if (!Array.isArray(parsed)) {
+        throw new Error('Response is not an array')
+      }
+      
+      // Validate each item
+      items = parsed.map((item, index) => {
+        if (typeof item !== 'object' || !item.name || !item.category) {
+          throw new Error(`Invalid item at index ${index}`)
+        }
+        return {
+          name: String(item.name),
+          category: String(item.category),
+          essential: Boolean(item.essential)
+        }
+      })
+    } catch (parseError) {
       console.error('Failed to parse OpenAI response:', content)
-      throw new Error('Invalid response format from AI')
+      console.error('Parse error:', parseError)
+      throw new PackingListError('Invalid response format from AI service', 'PARSE_ERROR')
     }
 
     // Add IDs and default properties
@@ -105,11 +144,26 @@ Return only the JSON array, no additional text.`
       custom: false,
     }))
 
+    if (packingList.length === 0) {
+      throw new PackingListError('AI service returned empty packing list', 'EMPTY_LIST')
+    }
+
     return packingList
   } catch (error) {
     console.error('Error generating packing list:', error)
     
-    // Fallback packing list if OpenAI fails
+    // Re-throw PackingListError as-is
+    if (error instanceof PackingListError) {
+      throw error
+    }
+    
+    // Wrap other errors
+    if (error instanceof Error) {
+      throw new PackingListError(error.message, 'UNKNOWN_ERROR')
+    }
+    
+    // Fallback packing list for unknown errors
+    console.warn('Falling back to default packing list due to unknown error')
     return getDefaultPackingList()
   }
 }

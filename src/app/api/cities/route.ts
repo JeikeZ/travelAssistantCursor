@@ -37,9 +37,37 @@ interface GeocodingResponse {
   results?: Array<GeocodingResult>
 }
 
-// Cache for city search results
-const citySearchCache = new Map<string, { data: CityResult[]; timestamp: number }>()
-const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
+// Enhanced cache with LRU-like behavior
+class CitySearchCache {
+  private cache = new Map<string, { data: CityResult[]; timestamp: number }>()
+  private readonly maxSize = 1000
+  private readonly cacheDuration = 60 * 60 * 1000 // 1 hour
+
+  get(key: string): CityResult[] | null {
+    const entry = this.cache.get(key)
+    if (!entry || Date.now() - entry.timestamp > this.cacheDuration) {
+      this.cache.delete(key)
+      return null
+    }
+    return entry.data
+  }
+
+  set(key: string, data: CityResult[]): void {
+    // Simple LRU: remove oldest entries if cache is full
+    if (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value
+      this.cache.delete(oldestKey)
+    }
+    
+    this.cache.set(key, { data, timestamp: Date.now() })
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+const citySearchCache = new CitySearchCache()
 
 // Predefined major cities for common countries to improve country search
 const MAJOR_CITIES_BY_COUNTRY: Record<string, string[]> = {
@@ -71,8 +99,8 @@ async function searchCities(query: string): Promise<CityResult[]> {
   
   // Check cache first
   const cached = citySearchCache.get(cacheKey)
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data
+  if (cached) {
+    return cached
   }
   
   try {
@@ -316,7 +344,7 @@ async function searchCities(query: string): Promise<CityResult[]> {
       )
     
     // Cache the result
-    citySearchCache.set(cacheKey, { data: cities, timestamp: Date.now() })
+    citySearchCache.set(cacheKey, cities)
     
     return cities
   } catch (error) {
