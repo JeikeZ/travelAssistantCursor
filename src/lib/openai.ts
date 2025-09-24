@@ -124,9 +124,17 @@ Return only the JSON array, no additional text.`
         if (typeof item !== 'object' || !item.name || !item.category) {
           throw new Error(`Invalid item at index ${index}`)
         }
+        
+        // Validate category is one of the allowed values
+        const validCategories = ['clothing', 'toiletries', 'electronics', 'travel_documents', 'medication', 'miscellaneous']
+        const category = String(item.category)
+        if (!validCategories.includes(category)) {
+          console.warn(`Invalid category "${category}" at index ${index}, defaulting to "miscellaneous"`)
+        }
+        
         return {
           name: String(item.name),
-          category: String(item.category),
+          category: validCategories.includes(category) ? category as PackingItem['category'] : 'miscellaneous',
           essential: Boolean(item.essential)
         }
       })
@@ -169,7 +177,7 @@ Return only the JSON array, no additional text.`
 }
 
 function getDefaultPackingList(): PackingItem[] {
-  const essentialItems = [
+  const essentialItems: Omit<PackingItem, 'id' | 'packed' | 'custom'>[] = [
     { name: 'Passport', category: 'travel_documents', essential: true },
     { name: 'Travel Insurance', category: 'travel_documents', essential: true },
     { name: 'Phone Charger', category: 'electronics', essential: true },
@@ -177,7 +185,7 @@ function getDefaultPackingList(): PackingItem[] {
     { name: 'Wallet/Credit Cards', category: 'miscellaneous', essential: true },
   ]
 
-  const clothingItems = [
+  const clothingItems: Omit<PackingItem, 'id' | 'packed' | 'custom'>[] = [
     { name: 'Underwear', category: 'clothing', essential: false },
     { name: 'Socks', category: 'clothing', essential: false },
     { name: 'T-shirts', category: 'clothing', essential: false },
@@ -185,14 +193,14 @@ function getDefaultPackingList(): PackingItem[] {
     { name: 'Pajamas', category: 'clothing', essential: false },
   ]
 
-  const toiletryItems = [
+  const toiletryItems: Omit<PackingItem, 'id' | 'packed' | 'custom'>[] = [
     { name: 'Toothbrush', category: 'toiletries', essential: false },
     { name: 'Toothpaste', category: 'toiletries', essential: false },
     { name: 'Shampoo', category: 'toiletries', essential: false },
     { name: 'Deodorant', category: 'toiletries', essential: false },
   ]
 
-  const electronicItems = [
+  const electronicItems: Omit<PackingItem, 'id' | 'packed' | 'custom'>[] = [
     { name: 'Phone', category: 'electronics', essential: true },
     { name: 'Camera', category: 'electronics', essential: false },
     { name: 'Power Bank', category: 'electronics', essential: false },

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { PackingItem } from '@/lib/openai'
 import { useLocalStorage } from './useLocalStorage'
 
