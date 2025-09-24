@@ -11,28 +11,30 @@ interface CityResult {
   displayName: string
 }
 
+interface GeocodingResult {
+  id: number
+  name: string
+  latitude: number
+  longitude: number
+  elevation?: number
+  feature_code: string
+  country_code: string
+  admin1_id?: number
+  admin2_id?: number
+  admin3_id?: number
+  admin4_id?: number
+  timezone: string
+  population?: number
+  country: string
+  country_id: number
+  admin1?: string
+  admin2?: string
+  admin3?: string
+  admin4?: string
+}
+
 interface GeocodingResponse {
-  results?: Array<{
-    id: number
-    name: string
-    latitude: number
-    longitude: number
-    elevation?: number
-    feature_code: string
-    country_code: string
-    admin1_id?: number
-    admin2_id?: number
-    admin3_id?: number
-    admin4_id?: number
-    timezone: string
-    population?: number
-    country: string
-    country_id: number
-    admin1?: string
-    admin2?: string
-    admin3?: string
-    admin4?: string
-  }>
+  results?: Array<GeocodingResult>
 }
 
 // Cache for city search results
@@ -207,7 +209,7 @@ async function searchCities(query: string): Promise<CityResult[]> {
       
       // Sort by importance: capital cities first, then major cities, then by population
       filteredResults = countryCities.sort((a, b) => {
-        const getImportanceScore = (result: any) => {
+        const getImportanceScore = (result: GeocodingResult) => {
           if (result.feature_code === 'PPLC') return 1000000 // Capital
           if (result.feature_code === 'PPLA') return 500000  // Major city
           if (result.feature_code === 'PPLA2') return 100000 // Secondary city
