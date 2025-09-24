@@ -10,12 +10,57 @@ interface WeatherData {
   }
 }
 
-// Cache for weather data (in production, use Redis or similar)
-const weatherCache = new Map<string, { data: unknown; timestamp: number }>()
-const CACHE_DURATION = 30 * 60 * 1000 // 30 minutes
+// Enhanced cache with better memory management
+class WeatherCache {
+  private cache = new Map<string, { data: unknown; timestamp: number }>()
+  private readonly maxSize = 500
+  private readonly cacheDuration = 30 * 60 * 1000 // 30 minutes
 
-// Request deduplication
-const pendingRequests = new Map<string, Promise<unknown>>()
+  get(key: string): unknown | null {
+    const entry = this.cache.get(key)
+    if (!entry || Date.now() - entry.timestamp > this.cacheDuration) {
+      this.cache.delete(key)
+      return null
+    }
+    return entry.data
+  }
+
+  set(key: string, data: unknown): void {
+    // Simple LRU: remove oldest entries if cache is full
+    if (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value
+      this.cache.delete(oldestKey)
+    }
+    
+    this.cache.set(key, { data, timestamp: Date.now() })
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+const weatherCache = new WeatherCache()
+
+// Request deduplication with cleanup
+class RequestDeduplicator {
+  private pendingRequests = new Map<string, Promise<unknown>>()
+
+  async deduplicate<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
+    if (this.pendingRequests.has(key)) {
+      return this.pendingRequests.get(key) as Promise<T>
+    }
+
+    const promise = requestFn().finally(() => {
+      this.pendingRequests.delete(key)
+    })
+
+    this.pendingRequests.set(key, promise)
+    return promise
+  }
+}
+
+const requestDeduplicator = new RequestDeduplicator()
 
 interface GeocodingResult {
   results?: Array<{
@@ -89,30 +134,34 @@ async function fetchWeatherData(city: string, country: string) {
   
   // Check cache first
   const cached = weatherCache.get(cacheKey)
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data
+  if (cached) {
+    return cached
   }
   
-  // Check if request is already pending
-  if (pendingRequests.has(cacheKey)) {
-    return await pendingRequests.get(cacheKey)
-  }
-  
-  // Create new request
-  const requestPromise = (async () => {
+  // Use request deduplication
+  return requestDeduplicator.deduplicate(cacheKey, async () => {
+    // Get coordinates for the location
+    const coordinates = await getCoordinates(city, country)
+    if (!coordinates) {
+      throw new Error('Location not found')
+    }
+    
+    // Fetch weather data from Open-Meteo with timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    
     try {
-      // Get coordinates for the location
-      const coordinates = await getCoordinates(city, country)
-      if (!coordinates) {
-        throw new Error('Location not found')
-      }
-      
-      // Fetch weather data from Open-Meteo
       const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7`
       
-      const weatherResponse = await fetch(weatherUrl)
+      const weatherResponse = await fetch(weatherUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'TravelAssistant/1.0'
+        }
+      })
+      
       if (!weatherResponse.ok) {
-        throw new Error('Failed to fetch weather data')
+        throw new Error(`Weather API responded with ${weatherResponse.status}`)
       }
       
       const weatherData: WeatherData = await weatherResponse.json()
@@ -135,19 +184,13 @@ async function fetchWeatherData(city: string, country: string) {
       }
       
       // Cache the result
-      weatherCache.set(cacheKey, { data: result, timestamp: Date.now() })
+      weatherCache.set(cacheKey, result)
       
       return result
     } finally {
-      // Remove from pending requests
-      pendingRequests.delete(cacheKey)
+      clearTimeout(timeoutId)
     }
-  })()
-  
-  // Store the pending request
-  pendingRequests.set(cacheKey, requestPromise)
-  
-  return await requestPromise
+  })
 }
 
 export async function GET(request: NextRequest) {

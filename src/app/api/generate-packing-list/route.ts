@@ -1,12 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generatePackingList, TripData } from '@/lib/openai'
 
-// Cache for packing lists (in production, use Redis or similar)
-const packingListCache = new Map<string, { data: unknown; timestamp: number }>()
-const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
+// Enhanced cache for packing lists
+class PackingListCache {
+  private cache = new Map<string, { data: unknown; timestamp: number }>()
+  private readonly maxSize = 200
+  private readonly cacheDuration = 24 * 60 * 60 * 1000 // 24 hours
+
+  get(key: string): unknown | null {
+    const entry = this.cache.get(key)
+    if (!entry || Date.now() - entry.timestamp > this.cacheDuration) {
+      this.cache.delete(key)
+      return null
+    }
+    return entry.data
+  }
+
+  set(key: string, data: unknown): void {
+    // Simple LRU: remove oldest entries if cache is full
+    if (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value
+      this.cache.delete(oldestKey)
+    }
+    
+    this.cache.set(key, { data, timestamp: Date.now() })
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+const packingListCache = new PackingListCache()
 
 // Request deduplication
-const pendingRequests = new Map<string, Promise<unknown>>()
+class PackingListDeduplicator {
+  private pendingRequests = new Map<string, Promise<unknown>>()
+
+  async deduplicate<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
+    if (this.pendingRequests.has(key)) {
+      return this.pendingRequests.get(key) as Promise<T>
+    }
+
+    const promise = requestFn().finally(() => {
+      this.pendingRequests.delete(key)
+    })
+
+    this.pendingRequests.set(key, promise)
+    return promise
+  }
+}
+
+const packingListDeduplicator = new PackingListDeduplicator()
 
 async function getCachedPackingList(tripData: TripData) {
   // Create cache key based on trip parameters
@@ -14,34 +59,19 @@ async function getCachedPackingList(tripData: TripData) {
   
   // Check cache first
   const cached = packingListCache.get(cacheKey)
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data
+  if (cached) {
+    return cached
   }
   
-  // Check if request is already pending
-  if (pendingRequests.has(cacheKey)) {
-    return await pendingRequests.get(cacheKey)
-  }
-  
-  // Create new request
-  const requestPromise = (async () => {
-    try {
-      const packingList = await generatePackingList(tripData)
-      
-      // Cache the result
-      packingListCache.set(cacheKey, { data: packingList, timestamp: Date.now() })
-      
-      return packingList
-    } finally {
-      // Remove from pending requests
-      pendingRequests.delete(cacheKey)
-    }
-  })()
-  
-  // Store the pending request
-  pendingRequests.set(cacheKey, requestPromise)
-  
-  return await requestPromise
+  // Use request deduplication
+  return packingListDeduplicator.deduplicate(cacheKey, async () => {
+    const packingList = await generatePackingList(tripData)
+    
+    // Cache the result
+    packingListCache.set(cacheKey, packingList)
+    
+    return packingList
+  })
 }
 
 export async function POST(request: NextRequest) {

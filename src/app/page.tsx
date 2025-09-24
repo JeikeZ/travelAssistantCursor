@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, memo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { MapPin, Calendar, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -8,7 +8,8 @@ import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { CitySearchInput, CityOption } from '@/components/ui/CitySearchInput'
 
-const tripTypes = [
+// Memoized trip types to prevent recreation on every render
+const TRIP_TYPES = [
   { value: '', label: 'Select trip type' },
   { value: 'business', label: 'Business' },
   { value: 'leisure', label: 'Leisure' },
@@ -17,10 +18,12 @@ const tripTypes = [
   { value: 'city', label: 'City Break' },
   { value: 'winter', label: 'Winter Sports' },
   { value: 'backpacking', label: 'Backpacking' },
-]
+] as const
 
-export default function Home() {
+// Memoized form component for better performance
+const HomeForm = memo(function HomeForm() {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [formData, setFormData] = useState({
     destination: null as CityOption | null,
     duration: '',
@@ -53,26 +56,28 @@ export default function Home() {
 
     setIsLoading(true)
     
-    try {
-      // Store trip data and navigate to packing list
-      const tripData = {
-        destinationCountry: formData.destination!.country,
-        destinationCity: formData.destination!.name,
-        destinationState: formData.destination!.admin1,
-        destinationDisplayName: formData.destination!.displayName,
-        duration: parseInt(formData.duration),
-        tripType: formData.tripType,
+    startTransition(() => {
+      try {
+        // Store trip data and navigate to packing list
+        const tripData = {
+          destinationCountry: formData.destination!.country,
+          destinationCity: formData.destination!.name,
+          destinationState: formData.destination!.admin1,
+          destinationDisplayName: formData.destination!.displayName,
+          duration: parseInt(formData.duration),
+          tripType: formData.tripType,
+        }
+        
+        // Store in localStorage for now (in production, save to Supabase)
+        localStorage.setItem('currentTrip', JSON.stringify(tripData))
+        
+        router.push('/packing-list')
+      } catch (error) {
+        console.error('Error creating trip:', error)
+      } finally {
+        setIsLoading(false)
       }
-      
-      // Store in localStorage for now (in production, save to Supabase)
-      localStorage.setItem('currentTrip', JSON.stringify(tripData))
-      
-      router.push('/packing-list')
-    } catch (error) {
-      console.error('Error creating trip:', error)
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
   const handleInputChange = useCallback((field: string, value: string) => {
@@ -91,6 +96,7 @@ export default function Home() {
     }
   }, [errors.destination])
 
+  // Memoized options to prevent recreation
   const durationOptions = useMemo(() => [
     { value: '', label: 'Select duration' },
     { value: '1', label: '1 day' },
@@ -103,6 +109,11 @@ export default function Home() {
     { value: '14', label: '2 weeks' },
     { value: '21', label: '3 weeks' },
     { value: '30', label: '1 month' },
+  ], [])
+
+  const tripTypeOptions = useMemo(() => [
+    { value: '', label: 'Select trip type' },
+    ...TRIP_TYPES.slice(1)
   ], [])
 
   return (
@@ -173,10 +184,7 @@ export default function Home() {
                   <span className="text-sm font-medium text-gray-800">Trip Type</span>
                 </div>
                 <Select
-                  options={[
-                    { value: '', label: 'Select trip type' },
-                    ...tripTypes.slice(1)
-                  ]}
+                  options={tripTypeOptions}
                   value={formData.tripType}
                   onChange={(e) => handleInputChange('tripType', e.target.value)}
                   error={errors.tripType}
@@ -189,45 +197,57 @@ export default function Home() {
                 type="submit"
                 size="lg"
                 className="w-full bg-[#1E8FEB] hover:bg-[#1A7DD4] text-white font-semibold py-3 rounded-lg mt-6"
-                disabled={isLoading}
+                disabled={isLoading || isPending}
               >
-                {isLoading ? 'Generating Your Packing List...' : 'Create My Packing List!'}
+                {(isLoading || isPending) ? 'Generating Your Packing List...' : 'Create My Packing List!'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
         {/* Features */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin className="w-8 h-8 text-blue-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Location Specific</h3>
-            <p className="text-sm text-gray-600">
-              Get recommendations based on your destination&apos;s climate and customs
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-8 h-8 text-blue-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Time Specific</h3>
-            <p className="text-sm text-gray-600">
-              We take into account for your trip length and activities
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Briefcase className="w-8 h-8 text-blue-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Type Specific</h3>
-            <p className="text-sm text-gray-600">
-              Get tailored recommendations for your trip based on your trip type
-            </p>
-          </div>
-        </div>
+        <FeaturesSection />
       </main>
     </div>
   )
+})
+
+// Memoized features section component
+const FeaturesSection = memo(function FeaturesSection() {
+  return (
+    <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <MapPin className="w-8 h-8 text-blue-600" />
+        </div>
+        <h3 className="font-semibold text-gray-900 mb-2">Location Specific</h3>
+        <p className="text-sm text-gray-600">
+          Get recommendations based on your destination&apos;s climate and customs
+        </p>
+      </div>
+      <div className="text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Calendar className="w-8 h-8 text-blue-600" />
+        </div>
+        <h3 className="font-semibold text-gray-900 mb-2">Time Specific</h3>
+        <p className="text-sm text-gray-600">
+          We take into account for your trip length and activities
+        </p>
+      </div>
+      <div className="text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Briefcase className="w-8 h-8 text-blue-600" />
+        </div>
+        <h3 className="font-semibold text-gray-900 mb-2">Type Specific</h3>
+        <p className="text-sm text-gray-600">
+          Get tailored recommendations for your trip based on your trip type
+        </p>
+      </div>
+    </div>
+  )
+})
+
+// Main component
+export default function Home() {
+  return <HomeForm />
 }

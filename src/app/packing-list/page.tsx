@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef, memo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Plus, 
@@ -17,32 +17,139 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PackingItem } from '@/lib/openai'
+import { usePackingList } from '@/hooks/usePackingList'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { useToast } from '@/components/ui/Toast'
 
 // Lazy load WeatherForecast component
 const WeatherForecast = lazy(() => 
   import('@/components/ui/WeatherForecast').then(module => ({ default: module.WeatherForecast }))
 )
 
-const categories = [
+// Memoized categories to prevent recreation
+const CATEGORIES = [
   { value: 'clothing', label: 'Clothing' },
   { value: 'toiletries', label: 'Toiletries' },
   { value: 'electronics', label: 'Electronics' },
   { value: 'travel_documents', label: 'Travel Documents' },
   { value: 'medication', label: 'Medication' },
   { value: 'miscellaneous', label: 'Miscellaneous' },
-]
+] as const
+
+// Memoized packing item component for better performance
+interface PackingItemComponentProps {
+  item: PackingItem
+  editingItem: string | null
+  onTogglePacked: (itemId: string) => void
+  onEdit: (itemId: string, newName: string) => void
+  onDelete: (itemId: string) => void
+  onStartEdit: (itemId: string) => void
+  onCancelEdit: () => void
+}
+
+const PackingItemComponent = memo(function PackingItemComponent({
+  item,
+  editingItem,
+  onTogglePacked,
+  onEdit,
+  onDelete,
+  onStartEdit,
+  onCancelEdit
+}: PackingItemComponentProps) {
+  return (
+    <div
+      className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
+        item.packed
+          ? 'bg-green-50 border-green-200'
+          : item.essential
+          ? 'bg-orange-50 border-orange-200'
+          : 'bg-white border-gray-200'
+      }`}
+    >
+      <Checkbox
+        checked={item.packed}
+        onChange={() => onTogglePacked(item.id)}
+      />
+      
+      {item.essential && (
+        <Star className="w-4 h-4 text-orange-500 fill-current" />
+      )}
+      
+      <div className="flex-1">
+        {editingItem === item.id ? (
+          <Input
+            defaultValue={item.name}
+            onBlur={(e) => onEdit(item.id, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onEdit(item.id, e.currentTarget.value)
+              } else if (e.key === 'Escape') {
+                onCancelEdit()
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <span
+            className={`${
+              item.packed ? 'line-through text-slate-600' : 'text-slate-900'
+            }`}
+          >
+            {item.name}
+          </span>
+        )}
+      </div>
+      
+      <div className="flex space-x-1">
+        {item.custom && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onStartEdit(item.id)}
+            >
+              <Edit3 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(item.id)}
+              className="text-red-600 hover:text-red-700"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+})
 
 export default function PackingListPage() {
   const router = useRouter()
-  const [tripData, setTripData] = useState<{
+  const [isPending, startTransition] = useTransition()
+  const { addToast } = useToast()
+  const [tripData, setTripData] = useLocalStorage<{
     destinationCountry: string
     destinationCity: string
     destinationState?: string
     destinationDisplayName?: string
     duration: number
     tripType: string
-  } | null>(null)
-  const [packingList, setPackingList] = useState<PackingItem[]>([])
+  } | null>('currentTrip', null)
+  
+  const {
+    packingList,
+    updatePackingList,
+    toggleItemPacked,
+    addCustomItem,
+    deleteItem,
+    editItem,
+    progress,
+    groupedItems,
+    sortedCategories
+  } = usePackingList()
+  
   const [isLoading, setIsLoading] = useState(true)
   const [isAddingItem, setIsAddingItem] = useState(false)
   const [newItem, setNewItem] = useState({
@@ -79,8 +186,7 @@ export default function PackingListPage() {
         throw new Error('Invalid packing list data received')
       }
       
-      setPackingList(data.packingList)
-      localStorage.setItem('currentPackingList', JSON.stringify(data.packingList))
+      updatePackingList(data.packingList)
     } catch (error) {
       console.error('Error generating packing list:', error)
       
@@ -93,155 +199,55 @@ export default function PackingListPage() {
         { id: 'fallback-5', name: 'Toothbrush', category: 'toiletries', essential: false, packed: false, custom: false },
       ]
       
-      setPackingList(basicList)
-      localStorage.setItem('currentPackingList', JSON.stringify(basicList))
+      updatePackingList(basicList)
       
-      // You could show a toast notification here in a real app
-      alert('We had trouble generating a custom packing list, but we\'ve provided a basic one to get you started!')
+      addToast({
+        type: 'warning',
+        title: 'Using Basic Packing List',
+        description: 'We had trouble generating a custom list, but provided a basic one to get you started.',
+        duration: 7000
+      })
     } finally {
       setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    // Get trip data from localStorage
-    const storedTripData = localStorage.getItem('currentTrip')
-    if (!storedTripData) {
+    // Check if we have trip data
+    if (!tripData) {
       router.push('/')
       return
     }
 
-    const parsedTripData = JSON.parse(storedTripData)
-    setTripData(parsedTripData)
-
     // Check if we already have a packing list
-    const storedPackingList = localStorage.getItem('currentPackingList')
-    if (storedPackingList) {
-      setPackingList(JSON.parse(storedPackingList))
-      setIsLoading(false)
-    } else {
+    if (packingList.length === 0) {
       // Generate new packing list
-      generatePackingList(parsedTripData)
+      generatePackingList(tripData)
+    } else {
+      setIsLoading(false)
     }
+  }, [tripData, packingList.length, router, generatePackingList])
 
-    // Cleanup timeout on unmount
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-    }
-  }, [router, generatePackingList])
-
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
-  const updatePackingList = useCallback((updatedList: PackingItem[]) => {
-    setPackingList(updatedList)
-    
-    // Debounce localStorage operations to reduce frequency
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-    
-    saveTimeoutRef.current = setTimeout(() => {
-      localStorage.setItem('currentPackingList', JSON.stringify(updatedList))
-    }, 300) // Save after 300ms of inactivity
-  }, [])
-
-  const toggleItemPacked = useCallback((itemId: string) => {
-    const updatedList = packingList.map(item =>
-      item.id === itemId ? { ...item, packed: !item.packed } : item
-    )
-    updatePackingList(updatedList)
-  }, [packingList, updatePackingList])
-
-  const addCustomItem = useCallback(() => {
+  const handleAddCustomItem = useCallback(() => {
     if (!newItem.name.trim()) return
 
-    const customItem: PackingItem = {
-      id: `custom-${Date.now()}`,
+    addCustomItem({
       name: newItem.name.trim(),
       category: newItem.category,
       essential: newItem.essential,
-      packed: false,
-      custom: true,
-    }
-
-    const updatedList = [...packingList, customItem]
-    updatePackingList(updatedList)
+    })
 
     setNewItem({ name: '', category: 'miscellaneous', essential: false })
     setIsAddingItem(false)
-  }, [newItem, packingList, updatePackingList])
+  }, [newItem, addCustomItem])
 
-  const deleteItem = useCallback((itemId: string) => {
-    const updatedList = packingList.filter(item => item.id !== itemId)
-    updatePackingList(updatedList)
-  }, [packingList, updatePackingList])
-
-  const editItem = useCallback((itemId: string, newName: string) => {
-    const updatedList = packingList.map(item =>
-      item.id === itemId ? { ...item, name: newName } : item
-    )
-    updatePackingList(updatedList)
+  const handleEditItem = useCallback((itemId: string, newName: string) => {
+    editItem(itemId, newName)
     setEditingItem(null)
-  }, [packingList, updatePackingList])
-
-  // Calculate progress
-  const { totalItems, packedItems, progress } = useMemo(() => {
-    const total = packingList.length
-    const packed = packingList.filter(item => item.packed).length
-    return {
-      totalItems: total,
-      packedItems: packed,
-      progress: total > 0 ? (packed / total) * 100 : 0
-    }
-  }, [packingList])
-
-  // Optimized grouping and sorting with single pass
-  const { groupedItems, sortedCategories } = useMemo(() => {
-    const groups: Record<string, PackingItem[]> = {}
-    const categoryEssentialMap = new Map<string, boolean>()
-    
-    // Single pass through items to group and track essential status
-    packingList.forEach(item => {
-      if (!groups[item.category]) {
-        groups[item.category] = []
-        categoryEssentialMap.set(item.category, false)
-      }
-      groups[item.category].push(item)
-      
-      // Track if category has essential items
-      if (item.essential && !categoryEssentialMap.get(item.category)) {
-        categoryEssentialMap.set(item.category, true)
-      }
-    })
-    
-    // Sort items within each category once (essential first, then alphabetical)
-    Object.keys(groups).forEach(category => {
-      groups[category].sort((a, b) => {
-        if (a.essential && !b.essential) return -1
-        if (!a.essential && b.essential) return 1
-        return a.name.localeCompare(b.name)
-      })
-    })
-    
-    // Sort categories efficiently
-    const sortedCats = Object.keys(groups).sort((a, b) => {
-      const aHasEssential = categoryEssentialMap.get(a)
-      const bHasEssential = categoryEssentialMap.get(b)
-      if (aHasEssential && !bHasEssential) return -1
-      if (!aHasEssential && bHasEssential) return 1
-      return a.localeCompare(b)
-    })
-    
-    return {
-      groupedItems: groups,
-      sortedCategories: sortedCats
-    }
-  }, [packingList])
+  }, [editItem])
 
   const getCategoryLabel = useCallback((category: string) => {
-    return categories.find(cat => cat.value === category)?.label || category
+    return CATEGORIES.find(cat => cat.value === category)?.label || category
   }, [])
 
   const handleFinishPacking = useCallback(() => {
@@ -322,17 +328,17 @@ export default function PackingListPage() {
             <Card className="mb-8">
               <CardContent className="pt-6">
                 <ProgressBar
-                  value={packedItems}
-                  max={totalItems}
+                  value={progress.packedItems}
+                  max={progress.totalItems}
                   showPercentage={true}
                 />
                 <div className="flex justify-between text-sm text-slate-700 mt-2">
-                  <span>{packedItems} of {totalItems} items packed</span>
+                  <span>{progress.packedItems} of {progress.totalItems} items packed</span>
                   <span>
-                    {progress === 100 ? (
+                    {progress.progress === 100 ? (
                       <span className="text-green-600 font-medium">Ready to go! 🎉</span>
                     ) : (
-                      `${Math.round(progress)}% complete`
+                      `${Math.round(progress.progress)}% complete`
                     )}
                   </span>
                 </div>
@@ -360,7 +366,7 @@ export default function PackingListPage() {
                         onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
                       />
                       <Select
-                        options={categories}
+                        options={CATEGORIES}
                         value={newItem.category}
                         onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
                       />
@@ -373,7 +379,7 @@ export default function PackingListPage() {
                       </div>
                     </div>
                     <div className="flex space-x-2">
-                      <Button onClick={addCustomItem} disabled={!newItem.name.trim()}>
+                      <Button onClick={handleAddCustomItem} disabled={!newItem.name.trim()}>
                         Add Item
                       </Button>
                       <Button
@@ -406,73 +412,17 @@ export default function PackingListPage() {
                   <CardContent>
                     <div className="space-y-3">
                       {groupedItems[category].map((item) => (
-                          <div
-                            key={item.id}
-                            className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
-                              item.packed
-                                ? 'bg-green-50 border-green-200'
-                                : item.essential
-                                ? 'bg-orange-50 border-orange-200'
-                                : 'bg-white border-gray-200'
-                            }`}
-                          >
-                            <Checkbox
-                              checked={item.packed}
-                              onChange={() => toggleItemPacked(item.id)}
-                            />
-                            
-                            {item.essential && (
-                              <Star className="w-4 h-4 text-orange-500 fill-current" />
-                            )}
-                            
-                            <div className="flex-1">
-                              {editingItem === item.id ? (
-                                <Input
-                                  defaultValue={item.name}
-                                  onBlur={(e) => editItem(item.id, e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      editItem(item.id, e.currentTarget.value)
-                                    } else if (e.key === 'Escape') {
-                                      setEditingItem(null)
-                                    }
-                                  }}
-                                  autoFocus
-                                />
-                              ) : (
-                                <span
-                                  className={`${
-                                    item.packed ? 'line-through text-slate-600' : 'text-slate-900'
-                                  }`}
-                                >
-                                  {item.name}
-                                </span>
-                              )}
-                            </div>
-                            
-                            <div className="flex space-x-1">
-                              {item.custom && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditingItem(item.id)}
-                                  >
-                                    <Edit3 className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => deleteItem(item.id)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                        <PackingItemComponent
+                          key={item.id}
+                          item={item}
+                          editingItem={editingItem}
+                          onTogglePacked={toggleItemPacked}
+                          onEdit={handleEditItem}
+                          onDelete={deleteItem}
+                          onStartEdit={setEditingItem}
+                          onCancelEdit={() => setEditingItem(null)}
+                        />
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -480,7 +430,7 @@ export default function PackingListPage() {
             </div>
 
             {/* Complete Button */}
-            {progress === 100 && (
+            {progress.progress === 100 && (
               <div className="mt-8 text-center">
                 <Button
                   size="lg"
