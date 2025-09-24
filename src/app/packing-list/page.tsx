@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef, memo, useTransition } from 'react'
+import { useState, useEffect, useCallback, lazy, Suspense, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Plus, 
@@ -34,7 +34,7 @@ const CATEGORIES = [
   { value: 'travel_documents', label: 'Travel Documents' },
   { value: 'medication', label: 'Medication' },
   { value: 'miscellaneous', label: 'Miscellaneous' },
-] as const
+]
 
 // Memoized packing item component for better performance
 interface PackingItemComponentProps {
@@ -127,9 +127,8 @@ const PackingItemComponent = memo(function PackingItemComponent({
 
 export default function PackingListPage() {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const { addToast } = useToast()
-  const [tripData, setTripData] = useLocalStorage<{
+  const [tripData] = useLocalStorage<{
     destinationCountry: string
     destinationCity: string
     destinationState?: string
@@ -152,7 +151,11 @@ export default function PackingListPage() {
   
   const [isLoading, setIsLoading] = useState(true)
   const [isAddingItem, setIsAddingItem] = useState(false)
-  const [newItem, setNewItem] = useState({
+  const [newItem, setNewItem] = useState<{
+    name: string
+    category: PackingItem['category']
+    essential: boolean
+  }>({
     name: '',
     category: 'miscellaneous',
     essential: false,
@@ -191,7 +194,7 @@ export default function PackingListPage() {
       console.error('Error generating packing list:', error)
       
       // Show user-friendly error and fallback to basic list
-      const basicList = [
+      const basicList: PackingItem[] = [
         { id: 'fallback-1', name: 'Passport', category: 'travel_documents', essential: true, packed: false, custom: false },
         { id: 'fallback-2', name: 'Phone Charger', category: 'electronics', essential: true, packed: false, custom: false },
         { id: 'fallback-3', name: 'Medications', category: 'medication', essential: true, packed: false, custom: false },
@@ -210,7 +213,7 @@ export default function PackingListPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [addToast, updatePackingList])
 
   useEffect(() => {
     // Check if we have trip data
@@ -368,7 +371,7 @@ export default function PackingListPage() {
                       <Select
                         options={CATEGORIES}
                         value={newItem.category}
-                        onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value as PackingItem['category'] }))}
                       />
                       <div className="flex items-center space-x-4">
                         <Checkbox

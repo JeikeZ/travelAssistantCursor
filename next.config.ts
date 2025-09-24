@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Performance optimizations
+  // Basic performance optimizations
   trailingSlash: false,
   poweredByHeader: false,
   compress: true,
@@ -9,66 +9,23 @@ const nextConfig: NextConfig = {
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ['lucide-react', 'clsx', 'tailwind-merge'],
-    optimizeCss: true,
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
   },
   
-  // Bundle analyzer and optimization
-  webpack: (config, { dev, isServer }) => {
-    // Bundle analyzer
-    if (process.env.ANALYZE === 'true') {
-      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
-      config.plugins.push(
-        new BundleAnalyzerPlugin({
-          analyzerMode: 'server',
-          openAnalyzer: true,
-        })
-      )
-    }
-
-    // Optimize bundle size
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // Vendor chunk
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-            priority: 20,
-          },
-          // Common chunk for shared code
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            priority: 10,
-            reuseExistingChunk: true,
-            enforce: true,
-          },
-          // React chunk
-          react: {
-            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-            name: 'react',
-            chunks: 'all',
-            priority: 30,
-          },
-        },
+  // Simplified webpack configuration
+  webpack: (config, { dev }) => {
+    // Bundle analyzer (only if explicitly requested)
+    if (process.env.ANALYZE === 'true' && !dev) {
+      try {
+        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+        config.plugins.push(
+          new BundleAnalyzerPlugin({
+            analyzerMode: 'server',
+            openAnalyzer: true,
+          })
+        )
+      } catch (error) {
+        console.warn('Bundle analyzer not available:', error instanceof Error ? error.message : String(error))
       }
-
-      // Tree shaking optimizations
-      config.optimization.usedExports = true
-      config.optimization.sideEffects = false
     }
     
     return config
@@ -111,15 +68,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  
-  // Ensure proper routing
-  async redirects() {
-    return []
-  },
-  
-  async rewrites() {
-    return []
-  }
 };
 
 export default nextConfig;

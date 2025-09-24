@@ -7,12 +7,14 @@ export interface AsyncState<T> {
 }
 
 export interface AsyncActions<T> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   execute: (...args: any[]) => Promise<T>
   reset: () => void
   setData: (data: T) => void
 }
 
 export function useAsyncState<T>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   asyncFunction?: (...args: any[]) => Promise<T>,
   initialData: T | null = null
 ): AsyncState<T> & AsyncActions<T> {
@@ -32,6 +34,7 @@ export function useAsyncState<T>(
   }, [])
 
   const execute = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (...args: any[]): Promise<T> => {
       if (!asyncFunction) {
         throw new Error('No async function provided')
