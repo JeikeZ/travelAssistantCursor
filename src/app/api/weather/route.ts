@@ -153,6 +153,7 @@ async function fetchWeatherData(city: string, country: string) {
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
     
     try {
+      // Construct weather API URL without past_days parameter to avoid historical data
       const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7`
       
       const weatherResponse = await fetch(weatherUrl, {
@@ -179,10 +180,20 @@ async function fetchWeatherData(city: string, country: string) {
         precipitationProbability: weatherData.daily.precipitation_probability_max[index] || 0
       }))
       
+      // Filter out any dates before today to ensure forecast starts with current day
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      const filteredForecast = forecast.filter(day => {
+        const forecastDate = new Date(day.date)
+        forecastDate.setHours(0, 0, 0, 0)
+        return forecastDate.getTime() >= today.getTime()
+      })
+      
       const result = {
         location: `${city}, ${country}`,
         coordinates,
-        forecast
+        forecast: filteredForecast
       }
       
       // Cache the result
@@ -207,6 +218,9 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
+    
+    // Explicitly ignore any past_days parameter to prevent historical data inclusion
+    // This ensures the forecast always starts from today
     
     const weatherData = await fetchWeatherData(city, country)
     
