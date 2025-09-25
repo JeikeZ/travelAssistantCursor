@@ -55,19 +55,46 @@ function CitySearchInputComponent({
     setIsLoading(true)
     try {
       const response = await fetch(`${API_ENDPOINTS.cities}?q=${encodeURIComponent(query.trim())}`, {
-        signal: abortControllerRef.current.signal
+        signal: abortControllerRef.current.signal,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
       
-      if (!response.ok) {
-        throw new Error('Failed to search cities')
+      if (!response?.ok) {
+        const statusText = response?.statusText || 'Unknown error'
+        const status = response?.status || 0
+        throw new Error(`HTTP ${status}: ${statusText}`)
       }
       
       const data = await response.json()
-      setOptions(data.cities || [])
+      
+      // Validate response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format from server')
+      }
+      
+      if (!Array.isArray(data.cities)) {
+        console.warn('Response does not contain cities array:', data)
+        setOptions([])
+      } else {
+        setOptions(data.cities)
+      }
+      
       setHasSearched(true)
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
         console.error('Error searching cities:', error)
+        
+        // Set user-friendly error state
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          console.error('Network error - check internet connection')
+        } else if (error.message.includes('HTTP 429')) {
+          console.error('Too many requests - please wait before searching again')
+        } else if (error.message.includes('HTTP 5')) {
+          console.error('Server error - please try again later')
+        }
+        
         setOptions([])
         setHasSearched(true)
       }
@@ -76,8 +103,8 @@ function CitySearchInputComponent({
     }
   }, [])
   
-  // Debounced search using custom hook
-  const [debouncedSearch] = useDebouncedCallback(searchCities, TIMEOUTS.debounce.search)
+  // Debounced search using custom hook with increased delay for better UX
+  const [debouncedSearch] = useDebouncedCallback(searchCities, 500)
   
   // Handle input change
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,11 +116,19 @@ function CitySearchInputComponent({
       onChange(null) // Clear selection when typing
     }
     
-    if (newValue.trim()) {
+    const trimmedValue = newValue.trim()
+    
+    if (trimmedValue.length >= 2) {
       setIsOpen(true)
       setHasSearched(false) // Reset search state when user types
       debouncedSearch(newValue)
+    } else if (trimmedValue.length === 0) {
+      // Clear everything when input is empty
+      setIsOpen(false)
+      setOptions([])
+      setHasSearched(false)
     } else {
+      // For single character, just close dropdown but don't search
       setIsOpen(false)
       setOptions([])
       setHasSearched(false)
@@ -187,11 +222,19 @@ function CitySearchInputComponent({
         <input
           ref={inputRef}
           type="text"
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-label="Search for destination city or country"
+          aria-activedescendant={highlightedIndex >= 0 ? `city-option-${highlightedIndex}` : undefined}
+          aria-describedby={error ? 'search-error' : undefined}
+          aria-autocomplete="list"
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (inputValue.trim()) {
+            const trimmedValue = inputValue.trim()
+            if (trimmedValue.length >= 2) {
               setIsOpen(true)
               if (!hasSearched) {
                 debouncedSearch(inputValue)
@@ -222,6 +265,8 @@ function CitySearchInputComponent({
       {isOpen && (
         <div
           ref={dropdownRef}
+          role="listbox"
+          aria-label="Search results"
           className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
         >
           {options.length === 0 && !isLoading && inputValue.trim().length >= 2 && hasSearched && (
@@ -256,7 +301,11 @@ function CitySearchInputComponent({
           {options.map((option, index) => (
             <button
               key={option.id}
+              id={`city-option-${index}`}
               type="button"
+              role="option"
+              aria-selected={index === highlightedIndex}
+              aria-label={`Select ${option.displayName}`}
               className={cn(
                 'w-full px-4 py-3 text-left text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none',
                 index === highlightedIndex && 'bg-blue-50 text-blue-700',
@@ -282,7 +331,9 @@ function CitySearchInputComponent({
       )}
       
       {error && (
-        <p className="mt-2 text-sm text-red-600">{error}</p>
+        <p id="search-error" className="mt-2 text-sm text-red-600" role="alert">
+          {error}
+        </p>
       )}
     </div>
   )
