@@ -88,11 +88,7 @@ export function convertTemperature(temp: number, fromUnit: TemperatureUnit, toUn
 
 // Utility function to format date
 export function formatDate(dateString: string): string {
-  // Parse the date string (which comes in YYYY-MM-DD format from the API)
-  // Create date in local timezone to avoid timezone conversion issues
-  const [year, month, day] = dateString.split('-').map(Number)
-  const date = new Date(year, month - 1, day) // month is 0-indexed in Date constructor
-  
+  const date = new Date(dateString)
   const today = new Date()
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
@@ -100,6 +96,7 @@ export function formatDate(dateString: string): string {
   // Set time to midnight for accurate date comparison
   today.setHours(0, 0, 0, 0)
   tomorrow.setHours(0, 0, 0, 0)
+  date.setHours(0, 0, 0, 0)
   
   if (date.getTime() === today.getTime()) {
     return 'Today'
