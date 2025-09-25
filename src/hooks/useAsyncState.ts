@@ -6,62 +6,49 @@ export interface AsyncState<T> {
   error: Error | null
 }
 
-export interface AsyncActions<T> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  execute: (...args: any[]) => Promise<T>
+export interface UseAsyncStateReturn<T> extends AsyncState<T> {
+  execute: (asyncFunction: () => Promise<T>) => Promise<T | null>
   reset: () => void
-  setData: (data: T) => void
 }
 
-export function useAsyncState<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  asyncFunction?: (...args: any[]) => Promise<T>,
+export function useAsyncState<T = any>(
   initialData: T | null = null
-): AsyncState<T> & AsyncActions<T> {
+): UseAsyncStateReturn<T> {
   const [state, setState] = useState<AsyncState<T>>({
     data: initialData,
     loading: false,
     error: null,
   })
 
-  const isMountedRef = useRef(true)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
-    isMountedRef.current = true
     return () => {
-      isMountedRef.current = false
+      mountedRef.current = false
     }
   }, [])
 
-  const execute = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async (...args: any[]): Promise<T> => {
-      if (!asyncFunction) {
-        throw new Error('No async function provided')
-      }
+  const execute = useCallback(async (asyncFunction: () => Promise<T>): Promise<T | null> => {
+    setState(prev => ({ ...prev, loading: true, error: null }))
 
-      setState(prev => ({ ...prev, loading: true, error: null }))
-
-      try {
-        const result = await asyncFunction(...args)
-        
-        if (isMountedRef.current) {
-          setState(prev => ({ ...prev, data: result, loading: false }))
-        }
-        
-        return result
-      } catch (error) {
-        const errorObj = error instanceof Error ? error : new Error(String(error))
-        
-        if (isMountedRef.current) {
-          setState(prev => ({ ...prev, error: errorObj, loading: false }))
-        }
-        
-        throw errorObj
+    try {
+      const result = await asyncFunction()
+      
+      if (mountedRef.current) {
+        setState({ data: result, loading: false, error: null })
       }
-    },
-    [asyncFunction]
-  )
+      
+      return result
+    } catch (error) {
+      const errorObj = error instanceof Error ? error : new Error('An unknown error occurred')
+      
+      if (mountedRef.current) {
+        setState(prev => ({ ...prev, loading: false, error: errorObj }))
+      }
+      
+      return null
+    }
+  }, [])
 
   const reset = useCallback(() => {
     setState({
@@ -71,14 +58,9 @@ export function useAsyncState<T>(
     })
   }, [initialData])
 
-  const setData = useCallback((data: T) => {
-    setState(prev => ({ ...prev, data, error: null }))
-  }, [])
-
   return {
     ...state,
     execute,
     reset,
-    setData,
   }
 }
