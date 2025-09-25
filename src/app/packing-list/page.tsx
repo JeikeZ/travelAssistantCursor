@@ -16,7 +16,7 @@ import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { PackingItem } from '@/lib/openai'
+import { PackingItem } from '@/types'
 import { usePackingList } from '@/hooks/usePackingList'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useToast } from '@/components/ui/Toast'
@@ -26,104 +26,11 @@ const WeatherForecast = lazy(() =>
   import('@/components/ui/WeatherForecast').then(module => ({ default: module.WeatherForecast }))
 )
 
-// Memoized categories to prevent recreation
-const CATEGORIES = [
-  { value: 'clothing', label: 'Clothing' },
-  { value: 'toiletries', label: 'Toiletries' },
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'travel_documents', label: 'Travel Documents' },
-  { value: 'medication', label: 'Medication' },
-  { value: 'miscellaneous', label: 'Miscellaneous' },
-]
+import { PACKING_CATEGORIES, STORAGE_KEYS, API_ENDPOINTS } from '@/lib/constants'
 
-// Memoized packing item component for better performance
-interface PackingItemComponentProps {
-  item: PackingItem
-  editingItem: string | null
-  onTogglePacked: (itemId: string) => void
-  onEdit: (itemId: string, newName: string) => void
-  onDelete: (itemId: string) => void
-  onStartEdit: (itemId: string) => void
-  onCancelEdit: () => void
-}
-
-const PackingItemComponent = memo(function PackingItemComponent({
-  item,
-  editingItem,
-  onTogglePacked,
-  onEdit,
-  onDelete,
-  onStartEdit,
-  onCancelEdit
-}: PackingItemComponentProps) {
-  return (
-    <div
-      className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
-        item.packed
-          ? 'bg-green-50 border-green-200'
-          : item.essential
-          ? 'bg-orange-50 border-orange-200'
-          : 'bg-white border-gray-200'
-      }`}
-    >
-      <Checkbox
-        checked={item.packed}
-        onChange={() => onTogglePacked(item.id)}
-      />
-      
-      {item.essential && (
-        <Star className="w-4 h-4 text-orange-500 fill-current" />
-      )}
-      
-      <div className="flex-1">
-        {editingItem === item.id ? (
-          <Input
-            defaultValue={item.name}
-            onBlur={(e) => onEdit(item.id, e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onEdit(item.id, e.currentTarget.value)
-              } else if (e.key === 'Escape') {
-                onCancelEdit()
-              }
-            }}
-            autoFocus
-          />
-        ) : (
-          <span
-            className={`${
-              item.packed ? 'line-through text-slate-600' : 'text-slate-900'
-            }`}
-          >
-            {item.name}
-          </span>
-        )}
-      </div>
-      
-      <div className="flex space-x-1">
-        {item.custom && (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onStartEdit(item.id)}
-            >
-              <Edit3 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(item.id)}
-              className="text-red-600 hover:text-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
-  )
-})
+import { PackingItemComponent } from '@/components/packing/PackingItemComponent'
+import { AddItemForm } from '@/components/packing/AddItemForm'
+import { PageHeader } from '@/components/layout/Header'
 
 export default function PackingListPage() {
   const router = useRouter()
@@ -135,7 +42,7 @@ export default function PackingListPage() {
     destinationDisplayName?: string
     duration: number
     tripType: string
-  } | null>('currentTrip', null)
+  } | null>(STORAGE_KEYS.currentTrip, null)
   
   const {
     packingList,
@@ -150,16 +57,6 @@ export default function PackingListPage() {
   } = usePackingList()
   
   const [isLoading, setIsLoading] = useState(true)
-  const [isAddingItem, setIsAddingItem] = useState(false)
-  const [newItem, setNewItem] = useState<{
-    name: string
-    category: PackingItem['category']
-    essential: boolean
-  }>({
-    name: '',
-    category: 'miscellaneous',
-    essential: false,
-  })
   const [editingItem, setEditingItem] = useState<string | null>(null)
 
   const generatePackingList = useCallback(async (tripData: {
@@ -171,7 +68,7 @@ export default function PackingListPage() {
     tripType: string
   }) => {
     try {
-      const response = await fetch('/api/generate-packing-list', {
+      const response = await fetch(API_ENDPOINTS.packingList, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,26 +133,13 @@ export default function PackingListPage() {
     }
   }, [tripData, packingList.length, router, generatePackingList])
 
-  const handleAddCustomItem = useCallback(() => {
-    if (!newItem.name.trim()) return
-
-    addCustomItem({
-      name: newItem.name.trim(),
-      category: newItem.category,
-      essential: newItem.essential,
-    })
-
-    setNewItem({ name: '', category: 'miscellaneous', essential: false })
-    setIsAddingItem(false)
-  }, [newItem, addCustomItem])
-
   const handleEditItem = useCallback((itemId: string, newName: string) => {
     editItem(itemId, newName)
     setEditingItem(null)
   }, [editItem])
 
   const getCategoryLabel = useCallback((category: string) => {
-    return CATEGORIES.find(cat => cat.value === category)?.label || category
+    return PACKING_CATEGORIES.find(cat => cat.value === category)?.label || category
   }, [])
 
   const handleFinishPacking = useCallback(() => {
@@ -275,32 +159,20 @@ export default function PackingListPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => router.push('/')}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </Button>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Packing List
-              </h1>
-              {tripData && (
-                <p className="text-slate-700">
-                  {tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`} • {tripData.duration} days • {tripData.tripType}
-                </p>
-              )}
-            </div>
-            <div className="w-20"></div> {/* Spacer for centering */}
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Packing List"
+        subtitle={tripData ? `${tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`} • ${tripData.duration} days • ${tripData.tripType}` : undefined}
+        backButton={
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/')}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </Button>
+        }
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -354,56 +226,7 @@ export default function PackingListPage() {
             </Card>
 
             {/* Add Item */}
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                {!isAddingItem ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAddingItem(true)}
-                    className="w-full flex items-center justify-center space-x-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Custom Item</span>
-                  </Button>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Input
-                        placeholder="Item name"
-                        value={newItem.name}
-                        onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
-                      />
-                      <Select
-                        options={CATEGORIES}
-                        value={newItem.category}
-                        onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value as PackingItem['category'] }))}
-                      />
-                      <div className="flex items-center space-x-4">
-                        <Checkbox
-                          checked={newItem.essential}
-                          onChange={(e) => setNewItem(prev => ({ ...prev, essential: e.target.checked }))}
-                          label="Essential"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button onClick={handleAddCustomItem} disabled={!newItem.name.trim()}>
-                        Add Item
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsAddingItem(false)
-                          setNewItem({ name: '', category: 'miscellaneous', essential: false })
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <AddItemForm onAddItem={addCustomItem} />
 
             {/* Packing List by Category */}
             <div className="space-y-6">

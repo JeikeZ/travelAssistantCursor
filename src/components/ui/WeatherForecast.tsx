@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, memo } from 'react'
 import { Cloud, CloudRain, Loader2 } from 'lucide-react'
 import { Card, CardHeader, CardContent } from './Card'
-import { WeatherData, formatDate, convertTemperature } from '@/lib/utils'
+import { formatDate, convertTemperature } from '@/lib/utils'
+import { WeatherData, TemperatureUnit } from '@/types'
+import { API_ENDPOINTS } from '@/lib/constants'
 
 interface WeatherForecastProps {
   city: string
@@ -14,7 +16,7 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>('C')
+  const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('C')
 
   const fetchWeather = useCallback(async () => {
     if (!city || !country) return
@@ -23,7 +25,7 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
     setError(null)
     
     try {
-      const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`)
+      const response = await fetch(`${API_ENDPOINTS.weather}?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`)
       
       if (!response.ok) {
         throw new Error('Failed to fetch weather data')
