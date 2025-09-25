@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { CityOption, GeocodingResult, GeocodingResponse } from '@/types'
 import { LRUCache, CACHE_CONFIGS } from '@/lib/cache'
-import { createErrorResponse, createSuccessResponse, rateLimiter, getClientIP, withTimeout, withRetry } from '@/lib/api-utils'
+import { createErrorResponse, createSuccessResponse, rateLimiter, getClientIP, withTimeout } from '@/lib/api-utils'
 
 const citySearchCache = new LRUCache<CityOption[]>(CACHE_CONFIGS.cities)
 

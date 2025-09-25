@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { generatePackingList } from '@/lib/openai'
 import { TripData } from '@/types'
 import { LRUCache, RequestDeduplicator, CACHE_CONFIGS } from '@/lib/cache'

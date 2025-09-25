@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
-  options: { value: string; label: string }[]
+  options: readonly { readonly value: string; readonly label: string }[]
 }
 
 export function Select({ className, label, error, options, ...props }: SelectProps) {

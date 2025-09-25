@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { WeatherApiResponse, GeocodingResponse } from '@/types'
 import { LRUCache, RequestDeduplicator, CACHE_CONFIGS } from '@/lib/cache'
 import { createErrorResponse, createSuccessResponse, rateLimiter, getClientIP, withTimeout, withRetry } from '@/lib/api-utils'

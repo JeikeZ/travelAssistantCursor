@@ -68,7 +68,7 @@ export const commonStyles = {
   focusVisible: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2'
 }
 
-import { WeatherData, WeatherForecast, TemperatureUnit } from '@/types'
+import { TemperatureUnit } from '@/types'
 
 // Temperature conversion utilities
 export function celsiusToFahrenheit(celsius: number): number {
