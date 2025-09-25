@@ -111,9 +111,14 @@ export function formatDate(dateString: string): string {
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
   
-  if (date.toDateString() === today.toDateString()) {
+  // Set time to midnight for accurate date comparison
+  today.setHours(0, 0, 0, 0)
+  tomorrow.setHours(0, 0, 0, 0)
+  date.setHours(0, 0, 0, 0)
+  
+  if (date.getTime() === today.getTime()) {
     return 'Today'
-  } else if (date.toDateString() === tomorrow.toDateString()) {
+  } else if (date.getTime() === tomorrow.getTime()) {
     return 'Tomorrow'
   } else {
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
