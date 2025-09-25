@@ -170,11 +170,23 @@ src/
 ## Available Scripts
 
 ```bash
+# Development
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript type checking
+
+# Testing
+npm test             # Run unit tests
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+npm run test:e2e     # Run end-to-end tests
+npm run test:e2e:ui  # Run E2E tests with UI
+npm run test:all     # Run all tests
+
+# Analysis
+npm run analyze      # Analyze bundle size
 ```
 
 ## Troubleshooting
@@ -241,11 +253,50 @@ Modify the prompt in `src/lib/openai.ts` to adjust how the AI generates recommen
 
 ## Performance Features
 
-- **Caching**: API responses are cached for 24 hours
+- **Caching**: API responses are cached with configurable TTL
 - **Request Deduplication**: Prevents duplicate API calls
-- **Lazy Loading**: Components load on demand
+- **Lazy Loading**: Components load on demand with Suspense
 - **Optimized Rendering**: Memoized components and hooks
 - **Local Storage**: Trip data persists across sessions
+- **Code Splitting**: Automatic route-based code splitting
+- **Bundle Optimization**: Tree shaking and dead code elimination
+- **Image Optimization**: Next.js automatic image optimization
+- **Memory Management**: LRU cache with memory limits
+
+## Testing
+
+The project includes comprehensive testing:
+
+- **Unit Tests**: Jest + React Testing Library
+- **Integration Tests**: API route testing
+- **E2E Tests**: Playwright cross-browser testing
+- **Coverage Reports**: 70%+ coverage threshold
+- **Accessibility Testing**: Automated a11y checks
+
+See [TESTING.md](./TESTING.md) for detailed testing guidelines.
+
+## Architecture
+
+### Frontend
+- **Next.js 15**: App Router with React Server Components
+- **TypeScript**: Full type safety
+- **Tailwind CSS**: Utility-first styling
+- **Custom Hooks**: Reusable stateful logic
+- **Error Boundaries**: Graceful error handling
+
+### Backend
+- **API Routes**: Next.js serverless functions
+- **OpenAI Integration**: AI-powered packing lists
+- **Caching Layer**: Multi-level caching strategy
+- **Rate Limiting**: Request throttling
+- **Input Validation**: Comprehensive validation
+
+### Performance Optimizations
+- **Memoization**: React.memo and useMemo
+- **Debouncing**: User input optimization
+- **Virtual Scrolling**: Large list handling
+- **Bundle Analysis**: Webpack bundle analyzer
+- **Compression**: Response compression
 
 ## Contributing
 

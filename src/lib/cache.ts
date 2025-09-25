@@ -35,7 +35,7 @@ export class LRUCache<T> {
 
   get(key: string): T | null {
     const entry = this.cache.get(key)
-    if (!entry || Date.now() - entry.timestamp > this.cacheDuration) {
+    if (!entry || (this.cacheDuration > 0 && Date.now() - entry.timestamp > this.cacheDuration)) {
       if (entry) {
         this.currentMemoryUsage -= entry.size
       }
@@ -50,7 +50,8 @@ export class LRUCache<T> {
 
   set(key: string, data: T): void {
     // Estimate memory usage
-    const dataSize = JSON.stringify(data).length * 2 // 2 bytes per character for UTF-16
+    const serialized = JSON.stringify(data)
+    const dataSize = (serialized?.length || 0) * 2 // 2 bytes per character for UTF-16
     
     // Remove expired entries first
     this.cleanup()

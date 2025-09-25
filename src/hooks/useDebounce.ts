@@ -1,53 +1,54 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-    
-    timeoutRef.current = setTimeout(() => {
+    const handler = setTimeout(() => {
       setDebouncedValue(value)
-      timeoutRef.current = null
     }, delay)
 
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
+      clearTimeout(handler)
     }
   }, [value, delay])
 
   return debouncedValue
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): [T, () => void] {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const callbackRef = useRef(callback)
 
-  const debouncedCallback = ((...args: Parameters<T>) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
+  // Update callback ref when callback changes
+  useEffect(() => {
+    callbackRef.current = callback
+  }, [callback])
 
-    timeoutRef.current = setTimeout(() => {
-      callback(...args)
-    }, delay)
-  }) as T
+  const debouncedCallback = useCallback(
+    ((...args: Parameters<T>) => {
+      // Clear existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
 
-  const cancel = () => {
+      // Set new timeout
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args)
+      }, delay)
+    }) as T,
+    [delay]
+  )
+
+  const cancel = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
-  }
+  }, [])
 
   // Cleanup on unmount
   useEffect(() => {

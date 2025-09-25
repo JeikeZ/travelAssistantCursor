@@ -70,6 +70,67 @@ export const commonStyles = {
 
 import { TemperatureUnit } from '@/types'
 
+// Debounce function for performance optimization
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null
+  
+  return (...args: Parameters<T>) => {
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+    
+    timeout = setTimeout(() => {
+      func(...args)
+    }, wait)
+  }
+}
+
+// Throttle function for performance optimization
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle = false
+  
+  return (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args)
+      inThrottle = true
+      setTimeout(() => {
+        inThrottle = false
+      }, limit)
+    }
+  }
+}
+
+// Safe JSON parse with fallback
+export function safeJsonParse<T>(
+  json: string, 
+  fallback: T
+): T {
+  try {
+    const parsed = JSON.parse(json)
+    return parsed !== null ? parsed : fallback
+  } catch {
+    return fallback
+  }
+}
+
+// Safe JSON stringify
+export function safeJsonStringify(
+  obj: any, 
+  fallback: string = '{}'
+): string {
+  try {
+    return JSON.stringify(obj)
+  } catch {
+    return fallback
+  }
+}
+
 // Temperature conversion utilities
 export function celsiusToFahrenheit(celsius: number): number {
   return Math.round((celsius * 9/5) + 32)
@@ -86,23 +147,39 @@ export function convertTemperature(temp: number, fromUnit: TemperatureUnit, toUn
   return temp
 }
 
-// Utility function to format date
+// Utility function to format date with error handling
 export function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  
-  // Set time to midnight for accurate date comparison
-  today.setHours(0, 0, 0, 0)
-  tomorrow.setHours(0, 0, 0, 0)
-  date.setHours(0, 0, 0, 0)
-  
-  if (date.getTime() === today.getTime()) {
-    return 'Today'
-  } else if (date.getTime() === tomorrow.getTime()) {
-    return 'Tomorrow'
-  } else {
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  try {
+    const date = new Date(dateString)
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.warn(`Invalid date string provided: ${dateString}`)
+      return 'Invalid Date'
+    }
+    
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    
+    // Set time to midnight for accurate date comparison
+    today.setHours(0, 0, 0, 0)
+    tomorrow.setHours(0, 0, 0, 0)
+    date.setHours(0, 0, 0, 0)
+    
+    if (date.getTime() === today.getTime()) {
+      return 'Today'
+    } else if (date.getTime() === tomorrow.getTime()) {
+      return 'Tomorrow'
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      })
+    }
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return 'Invalid Date'
   }
 }

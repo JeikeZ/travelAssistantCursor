@@ -1,13 +1,24 @@
 import { useCallback, useMemo, useRef } from 'react'
 import { PackingItem, UsePackingListReturn } from '@/types'
 import { useLocalStorage } from './useLocalStorage'
-
-// UsePackingListReturn is now imported from @/types
+import { STORAGE_KEYS } from '@/lib/constants'
 
 // Cache for category grouping to avoid recalculation
 const categoryGroupCache = new WeakMap<PackingItem[], { groupedItems: Record<string, PackingItem[]>, sortedCategories: string[] }>()
 
-import { STORAGE_KEYS } from '@/lib/constants'
+// Optimized comparison function for array equality
+const areArraysEqual = (a: PackingItem[], b: PackingItem[]): boolean => {
+  if (a.length !== b.length) return false
+  return a.every((item, index) => {
+    const bItem = b[index]
+    return item.id === bItem.id && 
+           item.name === bItem.name && 
+           item.packed === bItem.packed && 
+           item.essential === bItem.essential &&
+           item.category === bItem.category &&
+           item.custom === bItem.custom
+  })
+}
 
 export function usePackingList(): UsePackingListReturn {
   const [packingList, setPackingList] = useLocalStorage<PackingItem[]>(STORAGE_KEYS.currentPackingList, [])
@@ -16,7 +27,7 @@ export function usePackingList(): UsePackingListReturn {
   
   const updatePackingList = useCallback((updatedList: PackingItem[]) => {
     // Only update if the list actually changed to prevent unnecessary re-renders
-    if (JSON.stringify(updatedList) !== JSON.stringify(lastPackingListRef.current)) {
+    if (!areArraysEqual(updatedList, lastPackingListRef.current)) {
       setPackingList(updatedList)
       lastPackingListRef.current = updatedList
     }
