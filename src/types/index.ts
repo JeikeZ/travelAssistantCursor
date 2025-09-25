@@ -1,7 +1,7 @@
 // Centralized type definitions for better type safety and maintainability
 
 // Trip related types
-export interface TripData {
+export interface TripData extends Record<string, unknown> {
   destinationCountry: string
   destinationCity: string
   destinationState?: string
@@ -187,7 +187,7 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, field?: string) {
+  constructor(message: string) {
     super(message, 'VALIDATION_ERROR', 400)
     this.name = 'ValidationError'
   }

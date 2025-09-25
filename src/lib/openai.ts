@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import { TripData, PackingItem, PackingListResponse, AppError } from '@/types'
+import { TripData, PackingItem, AppError } from '@/types'
 
 let openai: OpenAI | null = null
 

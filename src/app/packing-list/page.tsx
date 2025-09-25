@@ -1,20 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback, lazy, Suspense, memo } from 'react'
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
-  Plus, 
   CheckCircle, 
-  Edit3, 
-  Trash2,
-  ArrowLeft,
-  Star
+  ArrowLeft
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
-import { Checkbox } from '@/components/ui/Checkbox'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PackingItem } from '@/types'
 import { usePackingList } from '@/hooks/usePackingList'
