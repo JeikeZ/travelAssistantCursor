@@ -50,7 +50,18 @@ async function searchCities(query: string): Promise<CityOption[]> {
     
     const data: GeocodingResponse = await response.json()
     
+    console.log(`Geocoding API response for "${query}":`, {
+      resultsCount: data.results?.length || 0,
+      firstResult: data.results?.[0] ? {
+        name: data.results[0].name,
+        country: data.results[0].country,
+        feature_code: data.results[0].feature_code,
+        population: data.results[0].population
+      } : null
+    })
+    
     if (!data.results || data.results.length === 0) {
+      console.log(`No results found for query: "${query}"`)
       return []
     }
     
@@ -60,23 +71,49 @@ async function searchCities(query: string): Promise<CityOption[]> {
     let targetCountry = ''
     
     // Check if any of the first few results is a country matching our query
-    for (let i = 0; i < Math.min(5, data.results.length); i++) {
+    for (let i = 0; i < Math.min(10, data.results.length); i++) {
       const result = data.results[i]
       if (result.feature_code === 'PCLI' && 
           (result.name.toLowerCase() === queryLower || 
-           result.country.toLowerCase() === queryLower)) {
+           result.country.toLowerCase() === queryLower ||
+           result.name.toLowerCase().includes(queryLower) ||
+           queryLower.includes(result.name.toLowerCase()))) {
         isCountrySearch = true
         targetCountry = result.country
+        console.log(`Country search detected: ${queryLower} -> ${targetCountry}`)
         break
       }
     }
     
     // Also check if the query matches any country name in the results
     if (!isCountrySearch) {
-      const countries = new Set(data.results.map(r => r.country.toLowerCase()))
+      const countries = new Set(data.results.map(r => r.country?.toLowerCase()).filter(Boolean))
       if (countries.has(queryLower)) {
         isCountrySearch = true
-        targetCountry = data.results.find(r => r.country.toLowerCase() === queryLower)?.country || ''
+        targetCountry = data.results.find(r => r.country?.toLowerCase() === queryLower)?.country || ''
+        console.log(`Country search detected by country match: ${queryLower} -> ${targetCountry}`)
+      }
+    }
+    
+    // Additional check for common country name variations
+    if (!isCountrySearch) {
+      const countryVariations: Record<string, string> = {
+        'usa': 'United States',
+        'us': 'United States',
+        'america': 'United States',
+        'uk': 'United Kingdom',
+        'britain': 'United Kingdom',
+        'england': 'United Kingdom',
+        'uae': 'United Arab Emirates'
+      }
+      
+      if (countryVariations[queryLower]) {
+        const targetCountryName = countryVariations[queryLower]
+        // For variations, we don't need to find a country match in the results
+        // We can directly set it as a country search
+        isCountrySearch = true
+        targetCountry = targetCountryName
+        console.log(`Country search detected by variation: ${queryLower} -> ${targetCountry}`)
       }
     }
     
@@ -123,6 +160,7 @@ async function searchCities(query: string): Promise<CityOption[]> {
                   // Take the best match (usually the first one for exact city name matches)
                   if (cityResults.length > 0) {
                     countryCities.push(cityResults[0])
+                    console.log(`Added ${cityResults[0].name} to ${targetCountry} cities`)
                   }
                   
                   // Break if we have enough cities
@@ -206,12 +244,19 @@ async function searchCities(query: string): Promise<CityOption[]> {
     } else {
       // Regular city search - filter for cities and major towns
       filteredResults = data.results.filter(result => {
-        const cityFeatureCodes = ['PPLC', 'PPLA', 'PPLA2', 'PPLA3', 'PPL']
+        const cityFeatureCodes = ['PPLC', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPL']
         const hasValidFeatureCode = cityFeatureCodes.includes(result.feature_code)
-        const hasSignificantPopulation = !result.population || result.population >= 25000
         
-        return hasValidFeatureCode && hasSignificantPopulation
+        // More lenient population filter - include smaller cities but prioritize larger ones
+        const hasReasonablePopulation = !result.population || result.population >= 1000
+        
+        // Exclude non-city features like countries, regions, etc.
+        const isNotCountryOrRegion = result.feature_code !== 'PCLI' && result.feature_code !== 'ADM1'
+        
+        return hasValidFeatureCode && hasReasonablePopulation && isNotCountryOrRegion
       })
+      
+      console.log(`Regular city search for "${query}": found ${filteredResults.length} results`)
       
       // Sort by relevance for city search
       filteredResults = filteredResults.sort((a, b) => {
@@ -281,6 +326,13 @@ async function searchCities(query: string): Promise<CityOption[]> {
     
     // Cache the result
     citySearchCache.set(cacheKey, cities)
+    
+    console.log(`Final results for "${query}":`, {
+      totalCities: cities.length,
+      isCountrySearch,
+      targetCountry,
+      cities: cities.slice(0, 3).map(c => ({ name: c.name, country: c.country, displayName: c.displayName }))
+    })
     
     return cities
   } catch (error) {
