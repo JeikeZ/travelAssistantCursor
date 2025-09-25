@@ -127,86 +127,91 @@ async function searchCities(query: string): Promise<CityOption[]> {
       let countryCities = data.results.filter(result => {
         const isFromTargetCountry = result.country === targetCountry
         const isCityOrTown = ['PPLC', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPL'].includes(result.feature_code)
-        const hasReasonablePopulation = !result.population || result.population >= 10000
+        // More lenient population filter for country searches - include smaller cities
+        const hasReasonablePopulation = !result.population || result.population >= 1000
         
         return isFromTargetCountry && isCityOrTown && hasReasonablePopulation && result.feature_code !== 'PCLI'
       })
       
-      // If we don't have enough cities, search for predefined major cities in that country
-      if (countryCities.length < 5) {
-        try {
-          const majorCities = MAJOR_CITIES_BY_COUNTRY[targetCountry]
+      // Always try to get major cities for country searches to ensure good results
+      try {
+        const majorCities = MAJOR_CITIES_BY_COUNTRY[targetCountry]
+        
+        if (majorCities) {
+          console.log(`Fetching predefined major cities for ${targetCountry}:`, majorCities.slice(0, 10))
           
-          if (majorCities) {
-            console.log(`Using predefined cities for ${targetCountry}:`, majorCities.slice(0, 5))
+          // Search for each major city
+          for (const cityName of majorCities.slice(0, 10)) { // Limit to top 10 to avoid too many API calls
+            const cityUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=5&language=en&format=json`
+            const cityResponse = await fetch(cityUrl)
             
-            // Search for each major city
-            for (const cityName of majorCities) {
-              const cityUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=10&language=en&format=json`
-              const cityResponse = await fetch(cityUrl)
+            if (cityResponse.ok) {
+              const cityData: GeocodingResponse = await cityResponse.json()
               
-              if (cityResponse.ok) {
-                const cityData: GeocodingResponse = await cityResponse.json()
+              if (cityData.results) {
+                const cityResults = cityData.results.filter(result => {
+                  const isFromTargetCountry = result.country === targetCountry
+                  const isCityOrTown = ['PPLC', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPL'].includes(result.feature_code)
+                  const notAlreadyIncluded = !countryCities.some(existing => existing.id === result.id)
+                  
+                  return isFromTargetCountry && isCityOrTown && notAlreadyIncluded
+                })
                 
-                if (cityData.results) {
-                  const cityResults = cityData.results.filter(result => {
-                    const isFromTargetCountry = result.country === targetCountry
-                    const isCityOrTown = ['PPLC', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPL'].includes(result.feature_code)
-                    const notAlreadyIncluded = !countryCities.some(existing => existing.id === result.id)
-                    
-                    return isFromTargetCountry && isCityOrTown && notAlreadyIncluded
-                  })
-                  
-                  // Take the best match (usually the first one for exact city name matches)
-                  if (cityResults.length > 0) {
-                    countryCities.push(cityResults[0])
-                    console.log(`Added ${cityResults[0].name} to ${targetCountry} cities`)
-                  }
-                  
-                  // Break if we have enough cities
-                  if (countryCities.length >= 15) break
+                // Take the best match (usually the first one for exact city name matches)
+                if (cityResults.length > 0) {
+                  countryCities.push(cityResults[0])
+                  console.log(`Added ${cityResults[0].name} to ${targetCountry} cities`)
                 }
-              }
-              
-              // Small delay to avoid hitting rate limits
-              await new Promise(resolve => setTimeout(resolve, 50))
-            }
-          } else {
-            // Fallback to generic searches for countries not in our predefined list
-            const additionalSearches = [
-              `${targetCountry} capital`,
-              `${targetCountry} cities`,
-              `${targetCountry} major`
-            ]
-            
-            for (const searchTerm of additionalSearches) {
-              const additionalUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchTerm)}&count=50&language=en&format=json`
-              const additionalResponse = await fetch(additionalUrl)
-              
-              if (additionalResponse.ok) {
-                const additionalData: GeocodingResponse = await additionalResponse.json()
                 
-                if (additionalData.results) {
-                  const additionalCities = additionalData.results.filter(result => {
-                    const isFromTargetCountry = result.country === targetCountry
-                    const isCityOrTown = ['PPLC', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPL'].includes(result.feature_code)
-                    const hasReasonablePopulation = !result.population || result.population >= 10000
-                    const notAlreadyIncluded = !countryCities.some(existing => existing.id === result.id)
-                    
-                    return isFromTargetCountry && isCityOrTown && hasReasonablePopulation && notAlreadyIncluded
-                  })
-                  
-                  countryCities = countryCities.concat(additionalCities)
-                  
-                  // Break if we have enough cities
-                  if (countryCities.length >= 15) break
-                }
+                // Break if we have enough cities
+                if (countryCities.length >= 20) break
               }
             }
+            
+            // Small delay to avoid hitting rate limits
+            await new Promise(resolve => setTimeout(resolve, 50))
           }
-        } catch (error) {
-          console.error('Error fetching additional cities:', error)
+        } else {
+          // Fallback to generic searches for countries not in our predefined list
+          console.log(`No predefined cities for ${targetCountry}, using fallback searches`)
+          const additionalSearches = [
+            `${targetCountry} capital`,
+            `${targetCountry} major cities`,
+            `${targetCountry} largest cities`
+          ]
+          
+          for (const searchTerm of additionalSearches) {
+            const additionalUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchTerm)}&count=30&language=en&format=json`
+            const additionalResponse = await fetch(additionalUrl)
+            
+            if (additionalResponse.ok) {
+              const additionalData: GeocodingResponse = await additionalResponse.json()
+              
+              if (additionalData.results) {
+                const additionalCities = additionalData.results.filter(result => {
+                  const isFromTargetCountry = result.country === targetCountry
+                  const isCityOrTown = ['PPLC', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPL'].includes(result.feature_code)
+                  // More lenient population filter for fallback searches
+                  const hasReasonablePopulation = !result.population || result.population >= 5000
+                  const notAlreadyIncluded = !countryCities.some(existing => existing.id === result.id)
+                  
+                  return isFromTargetCountry && isCityOrTown && hasReasonablePopulation && notAlreadyIncluded
+                })
+                
+                countryCities = countryCities.concat(additionalCities)
+                console.log(`Added ${additionalCities.length} cities from "${searchTerm}"`)
+                
+                // Break if we have enough cities
+                if (countryCities.length >= 15) break
+              }
+            }
+            
+            // Small delay to avoid hitting rate limits
+            await new Promise(resolve => setTimeout(resolve, 100))
+          }
         }
+      } catch (error) {
+        console.error('Error fetching additional cities:', error)
       }
       
       // Sort by importance: capital cities first, then major cities, then by population
