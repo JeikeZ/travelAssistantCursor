@@ -1,59 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generatePackingList, TripData } from '@/lib/openai'
+import { generatePackingList } from '@/lib/openai'
+import { TripData } from '@/types'
+import { LRUCache, RequestDeduplicator, CACHE_CONFIGS } from '@/lib/cache'
+import { createErrorResponse, createSuccessResponse, validateRequiredFields, rateLimiter, getClientIP, withTimeout } from '@/lib/api-utils'
 
-// Enhanced cache for packing lists
-class PackingListCache {
-  private cache = new Map<string, { data: unknown; timestamp: number }>()
-  private readonly maxSize = 200
-  private readonly cacheDuration = 24 * 60 * 60 * 1000 // 24 hours
-
-  get(key: string): unknown | null {
-    const entry = this.cache.get(key)
-    if (!entry || Date.now() - entry.timestamp > this.cacheDuration) {
-      this.cache.delete(key)
-      return null
-    }
-    return entry.data
-  }
-
-  set(key: string, data: unknown): void {
-    // Simple LRU: remove oldest entries if cache is full
-    if (this.cache.size >= this.maxSize) {
-      const oldestKey = this.cache.keys().next().value
-      if (oldestKey !== undefined) {
-        this.cache.delete(oldestKey)
-      }
-    }
-    
-    this.cache.set(key, { data, timestamp: Date.now() })
-  }
-
-  clear(): void {
-    this.cache.clear()
-  }
-}
-
-const packingListCache = new PackingListCache()
-
-// Request deduplication
-class PackingListDeduplicator {
-  private pendingRequests = new Map<string, Promise<unknown>>()
-
-  async deduplicate<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
-    if (this.pendingRequests.has(key)) {
-      return this.pendingRequests.get(key) as Promise<T>
-    }
-
-    const promise = requestFn().finally(() => {
-      this.pendingRequests.delete(key)
-    })
-
-    this.pendingRequests.set(key, promise)
-    return promise
-  }
-}
-
-const packingListDeduplicator = new PackingListDeduplicator()
+const packingListCache = new LRUCache(CACHE_CONFIGS.packingList)
+const packingListDeduplicator = new RequestDeduplicator()
 
 async function getCachedPackingList(tripData: TripData) {
   // Create cache key based on trip parameters
@@ -78,30 +30,55 @@ async function getCachedPackingList(tripData: TripData) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request)
+    if (!rateLimiter.isAllowed(clientIP)) {
+      return createErrorResponse('Too many requests', 429, 'RATE_LIMIT_EXCEEDED')
+    }
+
     const tripData: TripData = await request.json()
 
     // Validate required fields
-    if (!tripData.destinationCountry || !tripData.destinationCity || !tripData.duration || !tripData.tripType) {
-      return NextResponse.json(
-        { error: 'Missing required trip data' },
-        { status: 400 }
+    const validation = validateRequiredFields(tripData, [
+      'destinationCountry',
+      'destinationCity', 
+      'duration',
+      'tripType'
+    ])
+
+    if (!validation.isValid) {
+      return createErrorResponse(
+        `Missing required fields: ${validation.missingFields.join(', ')}`,
+        400,
+        'MISSING_REQUIRED_FIELDS'
       )
     }
 
-    const packingList = await getCachedPackingList(tripData)
+    // Validate field values
+    if (tripData.duration < 1 || tripData.duration > 365) {
+      return createErrorResponse('Duration must be between 1 and 365 days', 400, 'INVALID_DURATION')
+    }
 
-    const response = NextResponse.json({ packingList })
+    const packingList = await withTimeout(
+      getCachedPackingList(tripData),
+      30000, // 30 second timeout for AI generation
+      'Packing list generation timeout'
+    )
+
+    return createSuccessResponse({ packingList }, 86400) // 24 hours cache
     
-    // Add caching headers
-    response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=172800') // 24 hours cache, 48 hours stale
-    response.headers.set('CDN-Cache-Control', 'public, max-age=86400')
-    
-    return response
   } catch (error) {
     console.error('Error in generate-packing-list API:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate packing list' },
-      { status: 500 }
-    )
+    
+    if (error instanceof Error) {
+      if (error.message.includes('timeout')) {
+        return createErrorResponse('Generation timeout', 504, 'TIMEOUT')
+      }
+      if (error.message.includes('API key')) {
+        return createErrorResponse('Service configuration error', 503, 'SERVICE_UNAVAILABLE')
+      }
+    }
+    
+    return createErrorResponse('Failed to generate packing list', 500, 'INTERNAL_ERROR')
   }
 }

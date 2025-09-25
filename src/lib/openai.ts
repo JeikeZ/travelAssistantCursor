@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { TripData, PackingItem, PackingListResponse, AppError } from '@/types'
 
 let openai: OpenAI | null = null
 
@@ -18,31 +19,9 @@ function getOpenAIClient(): OpenAI | null {
   return openai
 }
 
-export interface TripData {
-  destinationCountry: string
-  destinationCity: string
-  destinationState?: string
-  destinationDisplayName?: string
-  duration: number
-  tripType: 'business' | 'leisure' | 'beach' | 'hiking' | 'city' | 'winter' | 'backpacking'
-}
-
-export interface PackingItem {
-  id: string
-  name: string
-  category: 'clothing' | 'toiletries' | 'electronics' | 'travel_documents' | 'medication' | 'miscellaneous'
-  essential: boolean
-  packed: boolean
-  custom: boolean
-}
-
-export interface PackingListResponse {
-  items: Omit<PackingItem, 'id' | 'packed' | 'custom'>[]
-}
-
-export class PackingListError extends Error {
-  constructor(message: string, public readonly code: string) {
-    super(message)
+export class PackingListError extends AppError {
+  constructor(message: string, code: string) {
+    super(message, code, 500)
     this.name = 'PackingListError'
   }
 }

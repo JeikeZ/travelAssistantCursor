@@ -4,17 +4,9 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { MapPin, ChevronDown, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useDebouncedCallback } from '@/hooks/useDebounce'
+import { API_ENDPOINTS, TIMEOUTS } from '@/lib/constants'
 
-export interface CityOption {
-  id: string
-  name: string
-  country: string
-  admin1?: string // State/Province
-  admin2?: string // County/District
-  latitude: number
-  longitude: number
-  displayName: string
-}
+import { CityOption } from '@/types'
 
 interface CitySearchInputProps {
   value?: CityOption | null
@@ -60,7 +52,7 @@ function CitySearchInputComponent({
     
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/cities?q=${encodeURIComponent(query.trim())}`, {
+      const response = await fetch(`${API_ENDPOINTS.cities}?q=${encodeURIComponent(query.trim())}`, {
         signal: abortControllerRef.current.signal
       })
       
@@ -81,7 +73,7 @@ function CitySearchInputComponent({
   }, [])
   
   // Debounced search using custom hook
-  const [debouncedSearch] = useDebouncedCallback(searchCities, 300)
+  const [debouncedSearch] = useDebouncedCallback(searchCities, TIMEOUTS.debounce.search)
   
   // Handle input change
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

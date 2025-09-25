@@ -1,113 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { WeatherApiResponse, GeocodingResponse } from '@/types'
+import { LRUCache, RequestDeduplicator, CACHE_CONFIGS } from '@/lib/cache'
+import { createErrorResponse, createSuccessResponse, rateLimiter, getClientIP, withTimeout, withRetry } from '@/lib/api-utils'
 
-interface WeatherData {
-  daily: {
-    time: string[]
-    temperature_2m_max: number[]
-    temperature_2m_min: number[]
-    weather_code: number[]
-    precipitation_probability_max: number[]
-  }
-}
-
-// Enhanced cache with better memory management
-class WeatherCache {
-  private cache = new Map<string, { data: unknown; timestamp: number }>()
-  private readonly maxSize = 500
-  private readonly cacheDuration = 30 * 60 * 1000 // 30 minutes
-
-  get(key: string): unknown | null {
-    const entry = this.cache.get(key)
-    if (!entry || Date.now() - entry.timestamp > this.cacheDuration) {
-      this.cache.delete(key)
-      return null
-    }
-    return entry.data
-  }
-
-  set(key: string, data: unknown): void {
-    // Simple LRU: remove oldest entries if cache is full
-    if (this.cache.size >= this.maxSize) {
-      const oldestKey = this.cache.keys().next().value
-      if (oldestKey !== undefined) {
-        this.cache.delete(oldestKey)
-      }
-    }
-    
-    this.cache.set(key, { data, timestamp: Date.now() })
-  }
-
-  clear(): void {
-    this.cache.clear()
-  }
-}
-
-const weatherCache = new WeatherCache()
-
-// Request deduplication with cleanup
-class RequestDeduplicator {
-  private pendingRequests = new Map<string, Promise<unknown>>()
-
-  async deduplicate<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
-    if (this.pendingRequests.has(key)) {
-      return this.pendingRequests.get(key) as Promise<T>
-    }
-
-    const promise = requestFn().finally(() => {
-      this.pendingRequests.delete(key)
-    })
-
-    this.pendingRequests.set(key, promise)
-    return promise
-  }
-}
-
+const weatherCache = new LRUCache(CACHE_CONFIGS.weather)
 const requestDeduplicator = new RequestDeduplicator()
 
-interface GeocodingResult {
-  results?: Array<{
-    latitude: number
-    longitude: number
-    name: string
-    country: string
-  }>
-}
+// Types are now imported from @/types
 
-// Weather code mapping for Open-Meteo
-const weatherCodeMap: Record<number, { description: string; icon: string }> = {
-  0: { description: 'Clear sky', icon: '☀️' },
-  1: { description: 'Mainly clear', icon: '🌤️' },
-  2: { description: 'Partly cloudy', icon: '⛅' },
-  3: { description: 'Overcast', icon: '☁️' },
-  45: { description: 'Fog', icon: '🌫️' },
-  48: { description: 'Depositing rime fog', icon: '🌫️' },
-  51: { description: 'Light drizzle', icon: '🌦️' },
-  53: { description: 'Moderate drizzle', icon: '🌦️' },
-  55: { description: 'Dense drizzle', icon: '🌧️' },
-  61: { description: 'Slight rain', icon: '🌦️' },
-  63: { description: 'Moderate rain', icon: '🌧️' },
-  65: { description: 'Heavy rain', icon: '🌧️' },
-  71: { description: 'Slight snow', icon: '🌨️' },
-  73: { description: 'Moderate snow', icon: '❄️' },
-  75: { description: 'Heavy snow', icon: '❄️' },
-  80: { description: 'Slight rain showers', icon: '🌦️' },
-  81: { description: 'Moderate rain showers', icon: '🌧️' },
-  82: { description: 'Violent rain showers', icon: '⛈️' },
-  95: { description: 'Thunderstorm', icon: '⛈️' },
-  96: { description: 'Thunderstorm with hail', icon: '⛈️' },
-  99: { description: 'Thunderstorm with heavy hail', icon: '⛈️' }
-}
+import { WEATHER_CODE_MAP, TIMEOUTS } from '@/lib/constants'
 
 async function getCoordinates(city: string, country: string): Promise<{ lat: number; lon: number } | null> {
   try {
     const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=10&language=en&format=json`
     
-    const response = await fetch(geocodingUrl)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUTS.api.geocoding)
+    
+    const response = await withRetry(
+      () => fetch(geocodingUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'TravelAssistant/1.0',
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip, deflate'
+        }
+      }),
+      2, // 2 retries
+      500 // 500ms base delay
+    )
+    
+    clearTimeout(timeoutId)
+    
     if (!response.ok) {
       throw new Error('Failed to fetch coordinates')
     }
     
-    const data: GeocodingResult = await response.json()
+    const data: GeocodingResponse = await response.json()
     
     if (!data.results || data.results.length === 0) {
       return null
@@ -148,26 +77,33 @@ async function fetchWeatherData(city: string, country: string) {
       throw new Error('Location not found')
     }
     
-    // Fetch weather data from Open-Meteo with timeout
+    // Fetch weather data from Open-Meteo with optimized timeout and retry
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUTS.api.weather)
     
     try {
       // Construct weather API URL to get exactly 7 days starting from today
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7`
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7&models=best_match`
       
-      const weatherResponse = await fetch(weatherUrl, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'TravelAssistant/1.0'
-        }
-      })
+      const weatherResponse = await withRetry(
+        () => fetch(weatherUrl, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'TravelAssistant/1.0',
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive'
+          }
+        }),
+        2, // 2 retries
+        1000 // 1s base delay
+      )
       
       if (!weatherResponse.ok) {
         throw new Error(`Weather API responded with ${weatherResponse.status}`)
       }
       
-      const weatherData: WeatherData = await weatherResponse.json()
+      const weatherData: WeatherApiResponse = await weatherResponse.json()
       
       // Format the response
       const forecast = weatherData.daily.time.map((date, index) => ({
@@ -175,8 +111,8 @@ async function fetchWeatherData(city: string, country: string) {
         maxTemp: Math.round(weatherData.daily.temperature_2m_max[index]),
         minTemp: Math.round(weatherData.daily.temperature_2m_min[index]),
         weatherCode: weatherData.daily.weather_code[index],
-        description: weatherCodeMap[weatherData.daily.weather_code[index]]?.description || 'Unknown',
-        icon: weatherCodeMap[weatherData.daily.weather_code[index]]?.icon || '❓',
+        description: WEATHER_CODE_MAP[weatherData.daily.weather_code[index]]?.description || 'Unknown',
+        icon: WEATHER_CODE_MAP[weatherData.daily.weather_code[index]]?.icon || '❓',
         precipitationProbability: weatherData.daily.precipitation_probability_max[index] || 0
       }))
       
@@ -210,35 +146,45 @@ async function fetchWeatherData(city: string, country: string) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request)
+    if (!rateLimiter.isAllowed(clientIP)) {
+      return createErrorResponse('Too many requests', 429, 'RATE_LIMIT_EXCEEDED')
+    }
+
     const { searchParams } = new URL(request.url)
     const city = searchParams.get('city')
     const country = searchParams.get('country')
     
     if (!city || !country) {
-      return NextResponse.json(
-        { error: 'City and country parameters are required' },
-        { status: 400 }
-      )
+      return createErrorResponse('City and country parameters are required', 400, 'MISSING_PARAMETERS')
+    }
+
+    // Validate input length
+    if (city.length > 100 || country.length > 100) {
+      return createErrorResponse('Parameter values too long', 400, 'INVALID_INPUT')
     }
     
-    // Get 7-day forecast starting from today
+    const weatherData = await withTimeout(
+      fetchWeatherData(city.trim(), country.trim()),
+      15000, // 15 second total timeout
+      'Weather request timeout'
+    )
     
-    const weatherData = await fetchWeatherData(city, country)
-    
-    const response = NextResponse.json(weatherData)
-    
-    // Add caching headers
-    response.headers.set('Cache-Control', 'public, max-age=1800, stale-while-revalidate=3600') // 30 minutes cache, 1 hour stale
-    response.headers.set('CDN-Cache-Control', 'public, max-age=1800')
-    response.headers.set('Vercel-CDN-Cache-Control', 'public, max-age=1800')
-    
-    return response
+    return createSuccessResponse(weatherData, 1800) // 30 minutes cache
     
   } catch (error) {
     console.error('Error in weather API:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch weather data' },
-      { status: 500 }
-    )
+    
+    if (error instanceof Error) {
+      if (error.message.includes('timeout')) {
+        return createErrorResponse('Request timeout', 504, 'TIMEOUT')
+      }
+      if (error.message.includes('Location not found')) {
+        return createErrorResponse('Location not found', 404, 'LOCATION_NOT_FOUND')
+      }
+    }
+    
+    return createErrorResponse('Failed to fetch weather data', 500, 'INTERNAL_ERROR')
   }
 }

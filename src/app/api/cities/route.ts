@@ -1,75 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { CityOption, GeocodingResult, GeocodingResponse } from '@/types'
+import { LRUCache, CACHE_CONFIGS } from '@/lib/cache'
+import { createErrorResponse, createSuccessResponse, rateLimiter, getClientIP, withTimeout, withRetry } from '@/lib/api-utils'
 
-interface CityResult {
-  id: string
-  name: string
-  country: string
-  admin1?: string // State/Province
-  admin2?: string // County/District
-  latitude: number
-  longitude: number
-  displayName: string
-}
-
-interface GeocodingResult {
-  id: number
-  name: string
-  latitude: number
-  longitude: number
-  elevation?: number
-  feature_code: string
-  country_code: string
-  admin1_id?: number
-  admin2_id?: number
-  admin3_id?: number
-  admin4_id?: number
-  timezone: string
-  population?: number
-  country: string
-  country_id: number
-  admin1?: string
-  admin2?: string
-  admin3?: string
-  admin4?: string
-}
-
-interface GeocodingResponse {
-  results?: Array<GeocodingResult>
-}
-
-// Enhanced cache with LRU-like behavior
-class CitySearchCache {
-  private cache = new Map<string, { data: CityResult[]; timestamp: number }>()
-  private readonly maxSize = 1000
-  private readonly cacheDuration = 60 * 60 * 1000 // 1 hour
-
-  get(key: string): CityResult[] | null {
-    const entry = this.cache.get(key)
-    if (!entry || Date.now() - entry.timestamp > this.cacheDuration) {
-      this.cache.delete(key)
-      return null
-    }
-    return entry.data
-  }
-
-  set(key: string, data: CityResult[]): void {
-    // Simple LRU: remove oldest entries if cache is full
-    if (this.cache.size >= this.maxSize) {
-      const oldestKey = this.cache.keys().next().value
-      if (oldestKey !== undefined) {
-        this.cache.delete(oldestKey)
-      }
-    }
-    
-    this.cache.set(key, { data, timestamp: Date.now() })
-  }
-
-  clear(): void {
-    this.cache.clear()
-  }
-}
-
-const citySearchCache = new CitySearchCache()
+const citySearchCache = new LRUCache<CityOption[]>(CACHE_CONFIGS.cities)
 
 // Predefined major cities for common countries to improve country search
 const MAJOR_CITIES_BY_COUNTRY: Record<string, string[]> = {
@@ -96,7 +30,7 @@ const MAJOR_CITIES_BY_COUNTRY: Record<string, string[]> = {
   'Argentina': ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'Tucumán', 'La Plata', 'Mar del Plata', 'Salta', 'Santa Fe', 'San Juan']
 }
 
-async function searchCities(query: string): Promise<CityResult[]> {
+async function searchCities(query: string): Promise<CityOption[]> {
   const cacheKey = query.toLowerCase().trim()
   
   // Check cache first
@@ -319,7 +253,7 @@ async function searchCities(query: string): Promise<CityResult[]> {
     }
     
     // Format results
-    const cities: CityResult[] = filteredResults
+    const cities: CityOption[] = filteredResults
       .map(result => {
         // Create display name with city, state/province, country
         let displayName = result.name
@@ -357,31 +291,38 @@ async function searchCities(query: string): Promise<CityResult[]> {
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request)
+    if (!rateLimiter.isAllowed(clientIP)) {
+      return createErrorResponse('Too many requests', 429, 'RATE_LIMIT_EXCEEDED')
+    }
+
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q')
     
     if (!query || query.trim().length < 2) {
-      return NextResponse.json(
-        { error: 'Query must be at least 2 characters long' },
-        { status: 400 }
-      )
+      return createErrorResponse('Query must be at least 2 characters long', 400, 'INVALID_QUERY_LENGTH')
+    }
+
+    if (query.length > 200) {
+      return createErrorResponse('Query too long', 400, 'QUERY_TOO_LONG')
     }
     
-    const cities = await searchCities(query.trim())
+    const cities = await withTimeout(
+      searchCities(query.trim()),
+      10000, // 10 second timeout
+      'City search timeout'
+    )
     
-    const response = NextResponse.json({ cities })
-    
-    // Add caching headers
-    response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=7200') // 1 hour cache, 2 hours stale
-    response.headers.set('CDN-Cache-Control', 'public, max-age=3600')
-    
-    return response
+    return createSuccessResponse({ cities }, 3600) // 1 hour cache
     
   } catch (error) {
     console.error('Error in cities API:', error)
-    return NextResponse.json(
-      { error: 'Failed to search cities' },
-      { status: 500 }
-    )
+    
+    if (error instanceof Error && error.message.includes('timeout')) {
+      return createErrorResponse('Search timeout', 504, 'TIMEOUT')
+    }
+    
+    return createErrorResponse('Failed to search cities', 500, 'INTERNAL_ERROR')
   }
 }

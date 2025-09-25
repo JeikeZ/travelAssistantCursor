@@ -68,25 +68,7 @@ export const commonStyles = {
   focusVisible: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2'
 }
 
-// Weather types
-export interface WeatherForecast {
-  date: string
-  maxTemp: number
-  minTemp: number
-  weatherCode: number
-  description: string
-  icon: string
-  precipitationProbability: number
-}
-
-export interface WeatherData {
-  location: string
-  coordinates: {
-    lat: number
-    lon: number
-  }
-  forecast: WeatherForecast[]
-}
+import { WeatherData, WeatherForecast, TemperatureUnit } from '@/types'
 
 // Temperature conversion utilities
 export function celsiusToFahrenheit(celsius: number): number {
@@ -97,7 +79,7 @@ export function fahrenheitToCelsius(fahrenheit: number): number {
   return Math.round((fahrenheit - 32) * 5/9)
 }
 
-export function convertTemperature(temp: number, fromUnit: 'C' | 'F', toUnit: 'C' | 'F'): number {
+export function convertTemperature(temp: number, fromUnit: TemperatureUnit, toUnit: TemperatureUnit): number {
   if (fromUnit === toUnit) return temp
   if (fromUnit === 'C' && toUnit === 'F') return celsiusToFahrenheit(temp)
   if (fromUnit === 'F' && toUnit === 'C') return fahrenheitToCelsius(temp)
