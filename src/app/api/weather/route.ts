@@ -154,7 +154,7 @@ async function fetchWeatherData(city: string, country: string) {
     
     try {
       // Construct weather API URL to get exactly 7 days starting from today
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7&start_date=${new Date().toISOString().split('T')[0]}`
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7`
       
       const weatherResponse = await fetch(weatherUrl, {
         signal: controller.signal,
@@ -219,8 +219,7 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Explicitly set start_date to today to prevent historical data inclusion
-    // This ensures the forecast always starts from today and shows exactly 7 days
+    // Get 7-day forecast starting from today
     
     const weatherData = await fetchWeatherData(city, country)
     
