@@ -179,41 +179,55 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {weatherData.forecast.map((day, index) => (
-            <div
-              key={day.date}
-              className={`flex items-center justify-between p-4 rounded-lg transition-all ${
-                index === 0
-                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 shadow-sm'
-                  : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              <div className="flex items-center space-x-4">
-                <span className={`${index === 0 ? 'text-3xl' : 'text-2xl'}`}>{day.icon}</span>
-                <div>
-                  <div className={`font-medium ${index === 0 ? 'text-blue-900 text-lg' : 'text-gray-900'}`}>
-                    {formatDate(day.date)}
-                    {index === 0 && <span className="ml-2 text-sm font-normal text-blue-700">(Current)</span>}
-                  </div>
-                  <div className={`text-sm ${index === 0 ? 'text-blue-700' : 'text-slate-600'}`}>
-                    {day.description}
+          {weatherData.forecast.map((day, index) => {
+            // Check if this day is today
+            const isToday = (() => {
+              try {
+                const dayDate = new Date(day.date)
+                const today = new Date()
+                dayDate.setHours(0, 0, 0, 0)
+                today.setHours(0, 0, 0, 0)
+                return dayDate.getTime() === today.getTime()
+              } catch {
+                return false
+              }
+            })()
+            
+            return (
+              <div
+                key={day.date}
+                className={`flex items-center justify-between p-4 rounded-lg transition-all ${
+                  isToday
+                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 shadow-sm'
+                    : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <div className="flex items-center space-x-4">
+                  <span className={`${isToday ? 'text-3xl' : 'text-2xl'}`}>{day.icon}</span>
+                  <div>
+                    <div className={`font-medium ${isToday ? 'text-blue-900 text-lg' : 'text-gray-900'}`}>
+                      {formatDate(day.date)}
+                    </div>
+                    <div className={`text-sm ${isToday ? 'text-blue-700' : 'text-slate-600'}`}>
+                      {day.description}
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="text-right">
-                <div className={`font-semibold ${index === 0 ? 'text-blue-900 text-lg' : 'text-gray-900'}`}>
-                  {convertTemperature(day.maxTemp, 'C', temperatureUnit)}° / {convertTemperature(day.minTemp, 'C', temperatureUnit)}°
-                </div>
-                {day.precipitationProbability > 0 && (
-                  <div className={`text-sm flex items-center ${index === 0 ? 'text-blue-700' : 'text-blue-600'}`}>
-                    <CloudRain className="w-3 h-3 mr-1" />
-                    {day.precipitationProbability}%
+                
+                <div className="text-right">
+                  <div className={`font-semibold ${isToday ? 'text-blue-900 text-lg' : 'text-gray-900'}`}>
+                    {convertTemperature(day.maxTemp, 'C', temperatureUnit)}° / {convertTemperature(day.minTemp, 'C', temperatureUnit)}°
                   </div>
-                )}
+                  {day.precipitationProbability > 0 && (
+                    <div className={`text-sm flex items-center ${isToday ? 'text-blue-700' : 'text-blue-600'}`}>
+                      <CloudRain className="w-3 h-3 mr-1" />
+                      {day.precipitationProbability}%
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
         
         <div className="mt-4 pt-3 border-t border-gray-200">
