@@ -115,7 +115,7 @@ describe('CitySearchInput', () => {
       await user.type(input, 'Tokyo')
       
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/api/cities?q=Tokyo')
+        expect(global.fetch).toHaveBeenCalledWith('/api/cities?q=Tokyo', expect.any(Object))
       })
     })
 
@@ -172,9 +172,17 @@ describe('CitySearchInput', () => {
 
     it('shows "No cities found" message when no results', async () => {
       const user = userEvent.setup()
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ cities: [] })
+      
+      // Clear any previous mocks and set up fresh mock for empty results
+      ;(global.fetch as jest.Mock).mockClear()
+      ;(global.fetch as jest.Mock).mockImplementation((url) => {
+        if (url.includes('Nonexistent')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ cities: [] })
+          })
+        }
+        return Promise.reject(new Error('Unexpected fetch call'))
       })
 
       render(<CitySearchInput value={null} onChange={mockOnChange} />)
@@ -183,8 +191,15 @@ describe('CitySearchInput', () => {
       
       await user.type(input, 'Nonexistent')
       
+      // Wait for the search to complete
       await waitFor(() => {
-        expect(screen.getByText(/No cities found for "Nonexistent"/)).toBeInTheDocument()
+        expect(global.fetch).toHaveBeenCalledWith('/api/cities?q=Nonexistent', expect.any(Object))
+      })
+      
+      await waitFor(() => {
+        expect(screen.getByText((content, element) => {
+          return content.includes('No cities found for') && content.includes('Nonexistent')
+        })).toBeInTheDocument()
       })
     })
 
@@ -422,7 +437,7 @@ describe('CitySearchInput', () => {
       
       // Should trigger search again (may be called multiple times due to typing)
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/api/cities?q=Japan')
+        expect(global.fetch).toHaveBeenCalledWith('/api/cities?q=Japan', expect.any(Object))
       })
     })
   })
