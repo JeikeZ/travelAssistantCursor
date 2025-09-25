@@ -51,6 +51,9 @@ export async function generatePackingList(tripData: TripData): Promise<PackingIt
   try {
     const client = getOpenAIClient()
     if (!client) {
+      if (!process.env.OPENAI_API_KEY) {
+        throw new PackingListError('OpenAI API key is not configured. Please add your API key to the .env.local file.', 'API_KEY_MISSING')
+      }
       throw new PackingListError('OpenAI service is not available', 'SERVICE_UNAVAILABLE')
     }
 

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Travel Assistant - Smart Packing Lists
 
 A modern web application that generates personalized packing lists for travelers using AI-powered recommendations based on destination, trip duration, and trip type.
@@ -12,7 +11,7 @@ A modern web application that generates personalized packing lists for travelers
 - **Progress Tracking**: Visual progress bar showing packing completion
 - **Essential Items**: Highlighted critical items (passport, medication, etc.)
 - **Category Organization**: Items grouped by clothing, toiletries, electronics, etc.
-- **Feedback System**: Post-trip survey to improve recommendations
+- **Weather Integration**: Optional weather forecasts for your destination
 
 ### User Experience
 - **Modern UI**: Beautiful, responsive design with Tailwind CSS
@@ -20,22 +19,22 @@ A modern web application that generates personalized packing lists for travelers
 - **Location-Specific**: Recommendations based on destination climate and customs
 - **Duration-Aware**: Tailored suggestions for trip length
 - **Mobile-Friendly**: Works seamlessly on all devices
+- **Offline Fallback**: Basic packing lists when AI service is unavailable
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 with App Router, TypeScript
-- **Styling**: Tailwind CSS
+- **Frontend**: Next.js 15 with App Router, TypeScript
+- **Styling**: Tailwind CSS 4
 - **AI Integration**: OpenAI GPT-3.5-turbo
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
+- **Icons**: Lucide React
+- **State Management**: React Hooks with Local Storage
 - **Hosting**: Vercel (recommended)
 
 ## Prerequisites
 
 - Node.js 18+ 
 - npm or yarn
-- OpenAI API key
-- Supabase account (optional for database features)
+- OpenAI API key (required for personalized lists)
 
 ## Getting Started
 
@@ -49,36 +48,30 @@ npm install
 
 ### 2. Environment Setup
 
-Copy the environment example file:
+The application includes environment configuration files:
 
 ```bash
-cp .env.example .env.local
+# Copy the example file to create your local environment
+cp .env.local.example .env.local
 ```
 
-Update `.env.local` with your credentials:
+Update `.env.local` with your API keys:
 
 ```env
-# OpenAI Configuration (Required)
+# OpenAI Configuration (Required for AI-generated lists)
 OPENAI_API_KEY=your_openai_api_key_here
 
-# Supabase Configuration (Optional - for database features)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+# Optional: Weather API Configuration
+# WEATHER_API_KEY=your_weather_api_key_here
 ```
 
-### 3. Get API Keys
+### 3. Get Your OpenAI API Key
 
-#### OpenAI API Key (Required)
 1. Go to [OpenAI API](https://platform.openai.com/api-keys)
 2. Create an account or sign in
 3. Generate a new API key
-4. Add it to your `.env.local` file
-
-#### Supabase Setup (Optional)
-1. Go to [Supabase](https://supabase.com)
-2. Create a new project
-3. Go to Settings → API to get your URL and anon key
-4. Add them to your `.env.local` file
+4. Copy the key and add it to your `.env.local` file
+5. **Important**: Replace `your_openai_api_key_here` with your actual API key
 
 ### 4. Run the Application
 
@@ -88,45 +81,26 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-## Database Schema (Supabase)
+### 5. Restart After Configuration
 
-If you want to use Supabase for data persistence, create these tables:
+After adding your API key to `.env.local`, restart the development server:
 
-```sql
--- Users table
-CREATE TABLE users (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Trips table
-CREATE TABLE trips (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  destination_country TEXT NOT NULL,
-  destination_city TEXT NOT NULL,
-  duration_days INTEGER NOT NULL,
-  trip_type TEXT NOT NULL,
-  packing_list JSONB,
-  completed BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Feedback table
-CREATE TABLE feedback (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  missing_items TEXT,
-  would_recommend BOOLEAN NOT NULL,
-  confidence_score INTEGER NOT NULL CHECK (confidence_score >= 1 AND confidence_score <= 10),
-  additional_feedback TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+```bash
+# Stop the server (Ctrl+C) and restart
+npm run dev
 ```
+
+## How It Works
+
+### Without API Key
+- The app will show a warning message: "OpenAI API Key Required"
+- A basic fallback packing list with essential items will be provided
+- You can still use all the packing list features (add items, check off, etc.)
+
+### With API Key
+- AI generates personalized packing lists based on your destination and trip details
+- Recommendations consider local climate, customs, and trip type
+- Lists are cached for better performance
 
 ## Project Structure
 
@@ -134,24 +108,35 @@ CREATE TABLE feedback (
 src/
 ├── app/                          # Next.js App Router
 │   ├── api/                      # API routes
-│   │   └── generate-packing-list/# OpenAI integration
+│   │   ├── generate-packing-list/# OpenAI integration
+│   │   ├── cities/               # City search API
+│   │   └── weather/              # Weather API
 │   ├── completion/               # Trip completion page
 │   ├── packing-list/            # Main packing list page
+│   ├── simple/                  # Simple interface
+│   ├── test/                    # Test page
 │   ├── globals.css              # Global styles
 │   ├── layout.tsx               # Root layout
 │   └── page.tsx                 # Home page (trip setup)
 ├── components/
+│   ├── ErrorBoundary.tsx        # Error boundary component
 │   └── ui/                      # Reusable UI components
 │       ├── Button.tsx
 │       ├── Card.tsx
 │       ├── Checkbox.tsx
+│       ├── CitySearchInput.tsx
 │       ├── Input.tsx
 │       ├── ProgressBar.tsx
-│       └── Select.tsx
+│       ├── Select.tsx
+│       ├── Toast.tsx
+│       └── WeatherForecast.tsx
+├── hooks/                       # Custom React hooks
+│   ├── useAsyncState.ts
+│   ├── useDebounce.ts
+│   ├── useLocalStorage.ts
+│   └── usePackingList.ts
 └── lib/
-    ├── database.types.ts        # TypeScript types
     ├── openai.ts               # OpenAI integration
-    ├── supabase.ts             # Supabase client
     └── utils.ts                # Utility functions
 ```
 
@@ -166,6 +151,7 @@ src/
 - AI generates a personalized list based on your trip details
 - Essential items are highlighted with stars
 - Items are organized by category
+- Weather forecast is shown (if available)
 
 ### 3. Customize Your List
 - Add custom items with the "Add Custom Item" button
@@ -177,10 +163,56 @@ src/
 - Watch your progress bar fill up
 - Essential items are prominently displayed
 
-### 5. Complete and Provide Feedback
+### 5. Complete Your Packing
 - Once 100% packed, proceed to completion
-- Share your experience through the feedback form
-- Help improve the service for other travelers
+- Get a congratulations message
+
+## Available Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run type-check   # Run TypeScript type checking
+```
+
+## Troubleshooting
+
+### "Using Basic Packing List" Warning
+This appears when:
+- OpenAI API key is not configured
+- API key is invalid
+- OpenAI service is temporarily unavailable
+
+**Solution**: Add your OpenAI API key to `.env.local` and restart the server.
+
+### API Key Not Working
+- Ensure you've copied the entire API key correctly
+- Check that the key starts with `sk-`
+- Verify your OpenAI account has available credits
+- Restart the development server after adding the key
+
+## Deployment
+
+### Vercel (Recommended)
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Add environment variables in Vercel dashboard:
+   - `OPENAI_API_KEY`: Your OpenAI API key
+4. Deploy automatically
+
+### Environment Variables for Production
+Make sure to add these environment variables in your hosting platform:
+- `OPENAI_API_KEY` (required)
+- `WEATHER_API_KEY` (optional)
+
+### Other Platforms
+The application can be deployed to any platform that supports Next.js:
+- Netlify
+- Railway
+- AWS Amplify
+- DigitalOcean App Platform
 
 ## Customization
 
@@ -195,10 +227,10 @@ const tripTypes = [
 ```
 
 ### Modifying Categories
-Update the `categories` array in `src/app/packing-list/page.tsx`:
+Update the `CATEGORIES` array in `src/app/packing-list/page.tsx`:
 
 ```typescript
-const categories = [
+const CATEGORIES = [
   { value: 'your-category', label: 'Your Category' },
   // ... existing categories
 ]
@@ -207,20 +239,13 @@ const categories = [
 ### Customizing AI Prompts
 Modify the prompt in `src/lib/openai.ts` to adjust how the AI generates recommendations.
 
-## Deployment
+## Performance Features
 
-### Vercel (Recommended)
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy automatically
-
-### Other Platforms
-The application can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- AWS Amplify
-- DigitalOcean App Platform
+- **Caching**: API responses are cached for 24 hours
+- **Request Deduplication**: Prevents duplicate API calls
+- **Lazy Loading**: Components load on demand
+- **Optimized Rendering**: Memoized components and hooks
+- **Local Storage**: Trip data persists across sessions
 
 ## Contributing
 
@@ -244,9 +269,10 @@ For issues and questions:
 ## Roadmap
 
 - [ ] User authentication and saved trips
-- [ ] Weather integration for climate-based suggestions
+- [ ] Enhanced weather integration
 - [ ] Collaborative packing lists for group trips
 - [ ] Mobile app version
 - [ ] Offline functionality
 - [ ] Integration with travel booking platforms
 - [ ] Multi-language support
+- [ ] Packing templates and presets
