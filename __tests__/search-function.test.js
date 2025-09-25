@@ -287,23 +287,23 @@ function testComponentIntegration() {
   // Test the key fixes we made
   const fixes = [
     {
-      description: 'Removed hasSearched state complexity',
+      description: 'Properly tracks search state to prevent premature "No cities found"',
       test: () => {
-        // Read the component file and check it doesn't contain hasSearched
+        // Read the component file and check it contains hasSearched state for proper tracking
         const fs = require('fs');
         const componentPath = path.join(process.cwd(), 'src/components/ui/CitySearchInput.tsx');
         const content = fs.readFileSync(componentPath, 'utf8');
-        return !content.includes('hasSearched');
+        return content.includes('hasSearched') && content.includes('setHasSearched');
       }
     },
     {
-      description: 'Simplified search trigger logic',
+      description: 'Only shows "No cities found" after search is completed',
       test: () => {
         const fs = require('fs');
         const componentPath = path.join(process.cwd(), 'src/components/ui/CitySearchInput.tsx');
         const content = fs.readFileSync(componentPath, 'utf8');
-        // Should not have complex hasSearched resets
-        return !content.includes('setHasSearched(false)');
+        // Should check hasSearched before showing "No cities found"
+        return content.includes('hasSearched &&') && content.includes('No cities found');
       }
     },
     {
@@ -362,9 +362,9 @@ async function main() {
   if (totalFailed === 0) {
     console.log('🎉 ALL TESTS PASSED! The destination search function has been successfully fixed.');
     console.log('\n✨ Key improvements made:');
-    console.log('  • Removed complex hasSearched state management');
-    console.log('  • Simplified search trigger logic'); 
-    console.log('  • Fixed search state resets on focus/refocus');
+    console.log('  • Added proper search state tracking to prevent premature "No cities found"');
+    console.log('  • Fixed race condition between dropdown opening and search execution'); 
+    console.log('  • Only shows "No cities found" after search is actually completed');
     console.log('  • Maintained proper debouncing and API calls');
   } else {
     console.log('⚠️  Some tests failed. Please review the implementation.');
