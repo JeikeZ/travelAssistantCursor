@@ -153,8 +153,8 @@ async function fetchWeatherData(city: string, country: string) {
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
     
     try {
-      // Construct weather API URL without past_days parameter to avoid historical data
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7`
+      // Construct weather API URL to get exactly 7 days starting from today
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7&start_date=${new Date().toISOString().split('T')[0]}`
       
       const weatherResponse = await fetch(weatherUrl, {
         signal: controller.signal,
@@ -180,7 +180,7 @@ async function fetchWeatherData(city: string, country: string) {
         precipitationProbability: weatherData.daily.precipitation_probability_max[index] || 0
       }))
       
-      // Filter out any dates before today to ensure forecast starts with current day
+      // Ensure forecast starts with current day and contains exactly 7 days
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       
@@ -188,7 +188,7 @@ async function fetchWeatherData(city: string, country: string) {
         const forecastDate = new Date(day.date)
         forecastDate.setHours(0, 0, 0, 0)
         return forecastDate.getTime() >= today.getTime()
-      })
+      }).slice(0, 7) // Ensure we only return exactly 7 days
       
       const result = {
         location: `${city}, ${country}`,
@@ -219,8 +219,8 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Explicitly ignore any past_days parameter to prevent historical data inclusion
-    // This ensures the forecast always starts from today
+    // Explicitly set start_date to today to prevent historical data inclusion
+    // This ensures the forecast always starts from today and shows exactly 7 days
     
     const weatherData = await fetchWeatherData(city, country)
     
