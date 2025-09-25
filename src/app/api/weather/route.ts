@@ -121,9 +121,7 @@ async function fetchWeatherData(city: string, country: string) {
       today.setHours(0, 0, 0, 0)
       
       const filteredForecast = forecast.filter(day => {
-        // Parse the date string properly to avoid timezone issues
-        const [year, month, dayNum] = day.date.split('-').map(Number)
-        const forecastDate = new Date(year, month - 1, dayNum) // month is 0-indexed
+        const forecastDate = new Date(day.date)
         forecastDate.setHours(0, 0, 0, 0)
         return forecastDate.getTime() >= today.getTime()
       }).slice(0, 7) // Ensure we only return exactly 7 days
