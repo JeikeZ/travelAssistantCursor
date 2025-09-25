@@ -27,8 +27,8 @@ export function createSuccessResponse<T>(
   response.headers.set('CDN-Cache-Control', `public, max-age=${cacheMaxAge}`)
   response.headers.set('Vercel-CDN-Cache-Control', `public, max-age=${cacheMaxAge}`)
   
-  // Add compression hint
-  response.headers.set('Content-Encoding', 'gzip')
+  // Note: Content-Encoding should only be set by the server/CDN when actually compressing
+  // response.headers.set('Content-Encoding', 'gzip') // REMOVED - causes response parsing issues
   
   return response
 }

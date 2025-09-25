@@ -73,7 +73,13 @@ function CitySearchInputComponent({
       }
       
       if (!Array.isArray(data.cities)) {
-        console.warn('Response does not contain cities array:', data)
+        console.warn('Response does not contain cities array:', {
+          data,
+          dataType: typeof data,
+          hasCitiesProperty: 'cities' in data,
+          citiesType: typeof data.cities,
+          citiesValue: data.cities
+        })
         setOptions([])
       } else {
         setOptions(data.cities)
@@ -98,8 +104,8 @@ function CitySearchInputComponent({
     }
   }, [])
   
-  // Debounced search using custom hook with increased delay for better UX
-  const [debouncedSearch] = useDebouncedCallback(searchCities, 500)
+  // Debounced search using custom hook with configured delay
+  const [debouncedSearch] = useDebouncedCallback(searchCities, TIMEOUTS.debounce.search)
   
   // Handle input change
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
