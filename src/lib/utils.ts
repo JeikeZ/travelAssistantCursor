@@ -71,6 +71,7 @@ export const commonStyles = {
 import { TemperatureUnit } from '@/types'
 
 // Debounce function for performance optimization
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -89,6 +90,7 @@ export function debounce<T extends (...args: any[]) => any>(
 }
 
 // Throttle function for performance optimization
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
   limit: number
@@ -121,7 +123,7 @@ export function safeJsonParse<T>(
 
 // Safe JSON stringify
 export function safeJsonStringify(
-  obj: any, 
+  obj: unknown, 
   fallback: string = '{}'
 ): string {
   try {

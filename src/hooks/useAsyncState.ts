@@ -11,7 +11,7 @@ export interface UseAsyncStateReturn<T> extends AsyncState<T> {
   reset: () => void
 }
 
-export function useAsyncState<T = any>(
+export function useAsyncState<T = unknown>(
   initialData: T | null = null
 ): UseAsyncStateReturn<T> {
   const [state, setState] = useState<AsyncState<T>>({
