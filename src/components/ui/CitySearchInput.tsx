@@ -30,6 +30,7 @@ function CitySearchInputComponent({
   const [options, setOptions] = useState<CityOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const [hasSearched, setHasSearched] = useState(false)
   
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -39,6 +40,7 @@ function CitySearchInputComponent({
   const searchCities = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
       setOptions([])
+      setHasSearched(false)
       return
     }
     
@@ -69,6 +71,7 @@ function CitySearchInputComponent({
       }
     } finally {
       setIsLoading(false)
+      setHasSearched(true)
     }
   }, [])
   
@@ -80,6 +83,7 @@ function CitySearchInputComponent({
     const newValue = e.target.value
     setInputValue(newValue)
     setHighlightedIndex(-1)
+    setHasSearched(false) // Reset search state when input changes
     
     if (newValue !== value?.displayName) {
       onChange(null) // Clear selection when typing
@@ -110,6 +114,7 @@ function CitySearchInputComponent({
       if (e.key === 'ArrowDown' || e.key === 'Enter') {
         setIsOpen(true)
         if (inputValue.trim()) {
+          setHasSearched(false) // Reset search state when opening via keyboard
           debouncedSearch(inputValue)
         }
       }
@@ -187,6 +192,7 @@ function CitySearchInputComponent({
           onFocus={() => {
             if (inputValue.trim()) {
               setIsOpen(true)
+              setHasSearched(false) // Reset search state when refocusing
               debouncedSearch(inputValue)
             }
           }}
@@ -216,7 +222,7 @@ function CitySearchInputComponent({
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
         >
-          {options.length === 0 && !isLoading && inputValue.trim().length >= 2 && (
+          {options.length === 0 && !isLoading && hasSearched && inputValue.trim().length >= 2 && (
             <div className="px-4 py-3 text-sm text-gray-500 text-center">
               <Search className="h-4 w-4 mx-auto mb-2 text-gray-400" />
               No cities found for &ldquo;{inputValue}&rdquo;
