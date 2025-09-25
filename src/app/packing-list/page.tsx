@@ -204,11 +204,16 @@ export default function PackingListPage() {
       
       updatePackingList(basicList)
       
+      // Check if it's an API key issue
+      const isApiKeyIssue = error instanceof Error && error.message.includes('API key')
+      
       addToast({
         type: 'warning',
-        title: 'Using Basic Packing List',
-        description: 'We had trouble generating a custom list, but provided a basic one to get you started.',
-        duration: 7000
+        title: isApiKeyIssue ? 'OpenAI API Key Required' : 'Using Basic Packing List',
+        description: isApiKeyIssue 
+          ? 'To generate personalized packing lists, please add your OpenAI API key to the .env.local file and restart the server.'
+          : 'We had trouble generating a custom list, but provided a basic one to get you started.',
+        duration: isApiKeyIssue ? 10000 : 7000
       })
     } finally {
       setIsLoading(false)
