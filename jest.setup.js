@@ -20,16 +20,58 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
+// Mock Next.js server components
+jest.mock('next/server', () => ({
+  NextRequest: class MockNextRequest {
+    constructor(input, init = {}) {
+      const url = typeof input === 'string' ? input : input.url
+      Object.defineProperty(this, 'url', {
+        value: url,
+        writable: false,
+        configurable: true
+      })
+      this.method = init?.method || 'GET'
+      this.headers = new Map(Object.entries(init?.headers || {}))
+      this.body = init?.body
+      this.searchParams = new URL(url).searchParams
+    }
+    
+    json() {
+      return Promise.resolve(JSON.parse(this.body || '{}'))
+    }
+  },
+  NextResponse: {
+    json: (data, init = {}) => ({
+      json: () => Promise.resolve(data),
+      status: init?.status || 200,
+      headers: {
+        set: jest.fn(),
+        get: jest.fn()
+      }
+    })
+  }
+}))
+
 // Mock environment variables
 process.env.OPENAI_API_KEY = 'test-api-key'
+
+// Add TextEncoder/TextDecoder for Node.js compatibility
+import { TextEncoder, TextDecoder } from 'util'
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
 
 // Mock Next.js Request and Response
 global.Request = class MockRequest {
   constructor(input, init = {}) {
-    this.url = typeof input === 'string' ? input : input.url
-    this.method = init.method || 'GET'
-    this.headers = new Map(Object.entries(init.headers || {}))
-    this.body = init.body
+    const url = typeof input === 'string' ? input : input.url
+    Object.defineProperty(this, 'url', {
+      value: url,
+      writable: false,
+      configurable: true
+    })
+    this.method = init?.method || 'GET'
+    this.headers = new Map(Object.entries(init?.headers || {}))
+    this.body = init?.body
   }
   
   json() {

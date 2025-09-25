@@ -43,12 +43,33 @@ async function searchCities(query: string): Promise<CityOption[]> {
     // Use Open-Meteo geocoding API (same as weather API)
     const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=100&language=en&format=json`
     
-    const response = await fetch(geocodingUrl)
-    if (!response.ok) {
-      throw new Error('Failed to fetch cities')
+    const response = await fetch(geocodingUrl, {
+      headers: {
+        'User-Agent': 'Travel-Assistant/1.0',
+        'Accept': 'application/json',
+      },
+    })
+    
+    if (!response?.ok) {
+      const statusText = response?.statusText || 'Unknown error'
+      const status = response?.status || 0
+      console.error(`Geocoding API error: ${status} ${statusText}`)
+      throw new Error(`Geocoding API returned ${status}: ${statusText}`)
     }
     
-    const data: GeocodingResponse = await response.json()
+    let data: GeocodingResponse
+    try {
+      data = await response.json()
+    } catch (jsonError) {
+      console.error('Failed to parse JSON response:', jsonError)
+      throw new Error('Invalid JSON response from geocoding API')
+    }
+    
+    // Validate response structure
+    if (!data || typeof data !== 'object') {
+      console.error('Invalid response structure:', data)
+      throw new Error('Invalid response structure from geocoding API')
+    }
     
     console.log(`Geocoding API response for "${query}":`, {
       resultsCount: data.results?.length || 0,
@@ -60,7 +81,7 @@ async function searchCities(query: string): Promise<CityOption[]> {
       } : null
     })
     
-    if (!data.results || data.results.length === 0) {
+    if (!data.results || !Array.isArray(data.results) || data.results.length === 0) {
       console.log(`No results found for query: "${query}"`)
       return []
     }
@@ -376,10 +397,30 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error in cities API:', error)
     
-    if (error instanceof Error && error.message.includes('timeout')) {
-      return createErrorResponse('Search timeout', 504, 'TIMEOUT')
+    if (error instanceof Error) {
+      // Handle specific error types
+      if (error.message.includes('timeout')) {
+        return createErrorResponse('Search timeout - please try again', 504, 'TIMEOUT')
+      }
+      
+      if (error.message.includes('Geocoding API returned 429')) {
+        return createErrorResponse('Too many requests - please wait before searching again', 429, 'RATE_LIMIT_EXCEEDED')
+      }
+      
+      if (error.message.includes('Geocoding API returned 5')) {
+        return createErrorResponse('External service unavailable - please try again later', 503, 'SERVICE_UNAVAILABLE')
+      }
+      
+      if (error.message.includes('Invalid JSON response') || error.message.includes('Invalid response structure')) {
+        return createErrorResponse('Data format error - please try again', 502, 'BAD_GATEWAY')
+      }
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        return createErrorResponse('Network error - please check your connection', 503, 'NETWORK_ERROR')
+      }
     }
     
-    return createErrorResponse('Failed to search cities', 500, 'INTERNAL_ERROR')
+    // Generic fallback error
+    return createErrorResponse('Search service temporarily unavailable', 500, 'INTERNAL_ERROR')
   }
 }
