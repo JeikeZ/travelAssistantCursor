@@ -37,6 +37,15 @@ function CheckboxComponent({ className, label, description, error, disabled, ...
             className
           )}
           role="presentation"
+          onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+            if (!disabled) {
+              // Trigger the hidden input's change event
+              const input = e.currentTarget.previousElementSibling as HTMLInputElement
+              if (input) {
+                input.click()
+              }
+            }
+          }}
         >
           {props.checked && (
             <Check className="w-3 h-3 text-white" aria-hidden="true" />
