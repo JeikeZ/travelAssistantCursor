@@ -17,6 +17,7 @@
     "test:all": "npm run test && npm run test:e2e"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.543.0",
     "next": "15.5.2",

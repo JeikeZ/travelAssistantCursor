@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useCallback, memo, useTransition } from 'react'
+import { useState, useCallback, memo, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { Header } from '@/components/layout/Header'
 import { FeatureSection } from '@/components/layout/FeatureSection'
 import { TripForm } from '@/components/forms/TripForm'
-import { TripData } from '@/types'
+import { AuthModal } from '@/components/auth/AuthModal'
+import { TripData, User } from '@/types'
 import { STORAGE_KEYS } from '@/lib/constants'
 
 // Memoized home page component for better performance
@@ -14,8 +15,42 @@ const HomePage = memo(function HomePage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isLoading, setIsLoading] = useState(false)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+
+  // Check for existing user on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser))
+      } catch (error) {
+        console.error('Error parsing stored user:', error)
+        localStorage.removeItem('user')
+      }
+    } else {
+      // Show auth modal if no user is logged in
+      setIsAuthModalOpen(true)
+    }
+  }, [])
+
+  const handleAuthSuccess = useCallback((user: User) => {
+    setCurrentUser(user)
+    setIsAuthModalOpen(false)
+  }, [])
+
+  const handleLogout = useCallback(() => {
+    setCurrentUser(null)
+    localStorage.removeItem('user')
+    setIsAuthModalOpen(true)
+  }, [])
 
   const handleTripSubmit = useCallback((tripData: TripData) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true)
+      return
+    }
+
     setIsLoading(true)
     
     startTransition(() => {
@@ -30,7 +65,7 @@ const HomePage = memo(function HomePage() {
         setIsLoading(false)
       }
     })
-  }, [router])
+  }, [router, currentUser])
 
   return (
     <div className="min-h-screen bg-gray-200">
@@ -38,6 +73,23 @@ const HomePage = memo(function HomePage() {
         title="Travel Assistant"
         subtitle="Generate personalized packing lists for your perfect trip"
       />
+
+      {/* User Info Bar */}
+      {currentUser && (
+        <div className="bg-white border-b border-gray-200 py-3">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <p className="text-sm text-gray-700">
+              Welcome back, <span className="font-semibold">{currentUser.username}</span>!
+            </p>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -62,6 +114,17 @@ const HomePage = memo(function HomePage() {
 
         <FeatureSection />
       </main>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          if (currentUser) {
+            setIsAuthModalOpen(false)
+          }
+        }}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   )
 })

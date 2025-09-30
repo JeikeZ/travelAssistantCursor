@@ -4,6 +4,14 @@ A modern web application that generates personalized packing lists for travelers
 
 ## Features
 
+### User Authentication 🆕
+- **User Profiles**: Secure user registration and login system
+- **Individual Trip Storage**: Each user stores their own trip information
+- **Password Security**: Strong password requirements (8+ chars, uppercase, lowercase)
+- **Unique Usernames**: Database-enforced unique username validation
+- **Persistent Sessions**: Stay logged in across browser sessions
+- **Beautiful UI**: Modern authentication modal with smooth UX
+
 ### Core Functionality
 - **Trip Setup**: Input destination, duration, and trip type
 - **AI-Powered Lists**: Generate intelligent packing suggestions using OpenAI
@@ -26,6 +34,8 @@ A modern web application that generates personalized packing lists for travelers
 - **Frontend**: Next.js 15 with App Router, TypeScript
 - **Styling**: Tailwind CSS 4
 - **AI Integration**: OpenAI GPT-3.5-turbo
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Custom user auth with Supabase
 - **Icons**: Lucide React
 - **State Management**: React Hooks with Local Storage
 - **Hosting**: Vercel (recommended)
@@ -35,6 +45,7 @@ A modern web application that generates personalized packing lists for travelers
 - Node.js 18+ 
 - npm or yarn
 - OpenAI API key (required for personalized lists)
+- Supabase account (free) - [Sign up here](https://supabase.com)
 
 ## Getting Started
 
@@ -58,14 +69,26 @@ cp .env.local.example .env.local
 Update `.env.local` with your API keys:
 
 ```env
+# Supabase Configuration (Required for user authentication)
+NEXT_PUBLIC_SUPABASE_URL=your-project-url.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
 # OpenAI Configuration (Required for AI-generated lists)
 OPENAI_API_KEY=your_openai_api_key_here
-
-# Optional: Weather API Configuration
-# WEATHER_API_KEY=your_weather_api_key_here
 ```
 
-### 3. Get Your OpenAI API Key
+**🚀 Quick Setup for Authentication:**
+See **[QUICK_START.md](./QUICK_START.md)** for a 5-minute setup guide!
+
+### 3. Setup Supabase Authentication
+
+Follow the detailed guide in **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)**:
+
+1. Create a Supabase project
+2. Create the `users` table
+3. Copy your API credentials to `.env.local`
+
+### 4. Get Your OpenAI API Key
 
 1. Go to [OpenAI API](https://platform.openai.com/api-keys)
 2. Create an account or sign in
@@ -73,7 +96,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 4. Copy the key and add it to your `.env.local` file
 5. **Important**: Replace `your_openai_api_key_here` with your actual API key
 
-### 4. Run the Application
+### 5. Run the Application
 
 ```bash
 npm run dev
@@ -81,14 +104,40 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### 5. Restart After Configuration
+### 6. Restart After Configuration
 
-After adding your API key to `.env.local`, restart the development server:
+After adding your API keys to `.env.local`, restart the development server:
 
 ```bash
 # Stop the server (Ctrl+C) and restart
 npm run dev
 ```
+
+## Authentication System
+
+The app now includes a complete user authentication system:
+
+### First Time Users
+1. Open the app - authentication modal appears automatically
+2. Click "Create an account"
+3. Choose a unique username (3+ characters)
+4. Create a strong password (8+ chars, 1 uppercase, 1 lowercase)
+5. Start planning your trips!
+
+### Returning Users
+1. Enter your username and password
+2. Click "Login"
+3. Welcome back message appears with your username
+
+### Features
+- ✅ Secure user registration and login
+- ✅ Password validation and hashing
+- ✅ Unique username checking
+- ✅ Error handling for incorrect credentials
+- ✅ Persistent sessions across browser refreshes
+- ✅ Beautiful modal UI matching modern design standards
+
+**See [USER_AUTHENTICATION_GUIDE.md](./USER_AUTHENTICATION_GUIDE.md) for complete documentation.**
 
 ## How It Works
 
@@ -108,17 +157,21 @@ npm run dev
 src/
 ├── app/                          # Next.js App Router
 │   ├── api/                      # API routes
+│   │   ├── auth/                # Authentication endpoints 🆕
+│   │   │   ├── login/          # User login
+│   │   │   └── register/       # User registration
 │   │   ├── generate-packing-list/# OpenAI integration
 │   │   ├── cities/               # City search API
 │   │   └── weather/              # Weather API
 │   ├── completion/               # Trip completion page
 │   ├── packing-list/            # Main packing list page
 │   ├── simple/                  # Simple interface
-│   ├── test/                    # Test page
 │   ├── globals.css              # Global styles
 │   ├── layout.tsx               # Root layout
 │   └── page.tsx                 # Home page (trip setup)
 ├── components/
+│   ├── auth/                    # Authentication components 🆕
+│   │   └── AuthModal.tsx       # Login/Register modal
 │   ├── ErrorBoundary.tsx        # Error boundary component
 │   └── ui/                      # Reusable UI components
 │       ├── Button.tsx
@@ -135,9 +188,13 @@ src/
 │   ├── useDebounce.ts
 │   ├── useLocalStorage.ts
 │   └── usePackingList.ts
-└── lib/
-    ├── openai.ts               # OpenAI integration
-    └── utils.ts                # Utility functions
+├── lib/
+│   ├── auth-utils.ts           # Auth validation utilities 🆕
+│   ├── supabase.ts             # Supabase client config 🆕
+│   ├── openai.ts               # OpenAI integration
+│   └── utils.ts                # Utility functions
+└── types/
+    └── index.ts                # TypeScript type definitions
 ```
 
 ## Usage
@@ -317,9 +374,18 @@ For issues and questions:
 2. Create a new issue with detailed information
 3. Include your environment details and error messages
 
+## Documentation
+
+- **[QUICK_START.md](./QUICK_START.md)** - 5-minute setup guide for authentication
+- **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - Detailed Supabase configuration
+- **[USER_AUTHENTICATION_GUIDE.md](./USER_AUTHENTICATION_GUIDE.md)** - Complete auth features
+- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Technical overview
+- **[TESTING.md](./TESTING.md)** - Testing guidelines
+
 ## Roadmap
 
-- [ ] User authentication and saved trips
+- [x] User authentication and saved trips ✅ **NEW!**
+- [ ] Per-user trip history and management
 - [ ] Enhanced weather integration
 - [ ] Collaborative packing lists for group trips
 - [ ] Mobile app version
@@ -327,3 +393,4 @@ For issues and questions:
 - [ ] Integration with travel booking platforms
 - [ ] Multi-language support
 - [ ] Packing templates and presets
+- [ ] Email notifications and reminders
