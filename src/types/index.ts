@@ -210,3 +210,26 @@ export type LocalStorageKey = 'currentTrip' | 'currentPackingList'
 export type ChangeHandler<T = string> = (value: T) => void
 export type ClickHandler = () => void
 export type SubmitHandler = (event: React.FormEvent) => void
+
+// User authentication types
+export interface User {
+  id: string
+  username: string
+  created_at: string
+}
+
+export interface UserCredentials {
+  username: string
+  password: string
+}
+
+export interface AuthResponse {
+  success: boolean
+  user?: User
+  error?: string
+}
+
+export interface PasswordValidation {
+  isValid: boolean
+  errors: string[]
+}
