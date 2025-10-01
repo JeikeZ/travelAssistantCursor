@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if username already exists
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingUser } = await supabase
       .from('users')
       .select('username')
       .eq('username', username)

@@ -222,6 +222,7 @@ function CitySearchInputComponent({
           type="text"
           role="combobox"
           aria-expanded={isOpen}
+          aria-controls="city-listbox"
           aria-haspopup="listbox"
           aria-label="Search for destination city or country"
           aria-activedescendant={highlightedIndex >= 0 ? `city-option-${highlightedIndex}` : undefined}
@@ -261,6 +262,7 @@ function CitySearchInputComponent({
       {isOpen && (
         <div
           ref={dropdownRef}
+          id="city-listbox"
           role="listbox"
           aria-label="Search results"
           className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
