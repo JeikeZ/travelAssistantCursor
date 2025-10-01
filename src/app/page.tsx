@@ -65,7 +65,7 @@ const HomePage = memo(function HomePage() {
         setIsLoading(false)
       }
     })
-  }, [router, currentUser])
+  }, [router, currentUser, startTransition])
 
   return (
     <div className="min-h-screen bg-gray-200">
