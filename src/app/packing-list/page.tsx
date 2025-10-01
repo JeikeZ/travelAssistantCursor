@@ -124,7 +124,10 @@ export default function PackingListPage() {
     } else {
       setIsLoading(false)
     }
-  }, [tripData, packingList.length, router, generatePackingList])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripData, packingList.length, router])
+  // Note: generatePackingList is intentionally excluded to prevent unnecessary re-generation
+  // when its dependencies (addToast, updatePackingList) change
 
   const handleEditItem = useCallback((itemId: string, newName: string) => {
     editItem(itemId, newName)
