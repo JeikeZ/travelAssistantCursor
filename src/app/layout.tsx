@@ -24,11 +24,12 @@ export const metadata: Metadata = {
     title: "Travel Assistant - Smart Packing Lists",
     description: "Generate personalized packing lists for your trips and never forget essential items again.",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

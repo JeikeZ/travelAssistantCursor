@@ -179,7 +179,7 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {weatherData.forecast.map((day, index) => {
+          {weatherData.forecast.map((day) => {
             // Check if this day is today
             const isToday = (() => {
               try {
