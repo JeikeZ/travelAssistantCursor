@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { validatePassword, validateUsername } from '@/lib/auth-utils'
 import { User, UserCredentials } from '@/types'
-import { X } from 'lucide-react'
+import { X, Eye, EyeOff } from 'lucide-react'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -27,6 +27,8 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     general?: string
   }>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const resetForm = useCallback(() => {
     setCredentials({ username: '', password: '' })
@@ -189,21 +191,21 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             {/* Password Input */}
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={credentials.password}
                 onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
-                className="w-full h-12 px-4 bg-white rounded-full border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 placeholder:text-gray-500"
+                className="w-full h-12 px-4 pr-12 bg-white rounded-full border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 placeholder:text-gray-500"
                 disabled={isLoading}
               />
               {credentials.password && (
                 <button
                   type="button"
-                  onClick={() => setCredentials(prev => ({ ...prev, password: '' }))}
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  aria-label="Clear password"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  <X size={18} />
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               )}
               {errors.password && (
@@ -215,21 +217,21 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             {mode === 'register' && (
               <div className="relative">
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm Password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-12 px-4 bg-white rounded-full border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 placeholder:text-gray-500"
+                  className="w-full h-12 px-4 pr-12 bg-white rounded-full border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 placeholder:text-gray-500"
                   disabled={isLoading}
                 />
                 {confirmPassword && (
                   <button
                     type="button"
-                    onClick={() => setConfirmPassword('')}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    aria-label="Clear confirm password"
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                   >
-                    <X size={18} />
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 )}
                 {errors.confirmPassword && (
