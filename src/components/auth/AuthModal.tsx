@@ -40,6 +40,14 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     onClose()
   }, [onClose, resetForm])
 
+  const handleBackdropClick = useCallback(() => {
+    // Only close the modal if in login mode
+    // In register mode, ignore backdrop clicks
+    if (mode === 'login') {
+      handleClose()
+    }
+  }, [mode, handleClose])
+
   const validateForm = useCallback((): boolean => {
     const newErrors: typeof errors = {}
 
@@ -111,7 +119,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={handleClose}
+      onClick={handleBackdropClick}
     >
       <div 
         className="relative w-full max-w-md mx-4"
