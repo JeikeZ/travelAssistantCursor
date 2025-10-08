@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
 import { validatePassword, validateUsername } from '@/lib/auth-utils'
 import { User, UserCredentials } from '@/types'
 import { X } from 'lucide-react'
@@ -21,15 +19,18 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     username: '',
     password: '',
   })
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState<{
     username?: string
     password?: string
+    confirmPassword?: string
     general?: string
   }>({})
   const [isLoading, setIsLoading] = useState(false)
 
   const resetForm = useCallback(() => {
     setCredentials({ username: '', password: '' })
+    setConfirmPassword('')
     setErrors({})
     setIsLoading(false)
   }, [])
@@ -67,9 +68,18 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       }
     }
 
+    // Validate password confirmation (only in register mode)
+    if (mode === 'register') {
+      if (!confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password'
+      } else if (credentials.password !== confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match'
+      }
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }, [credentials, mode])
+  }, [credentials, confirmPassword, mode])
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -200,6 +210,33 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 <p className="mt-2 text-sm text-red-600 ml-4">{errors.password}</p>
               )}
             </div>
+
+            {/* Confirm Password Input (only show in register mode) */}
+            {mode === 'register' && (
+              <div className="relative">
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full h-12 px-4 bg-white rounded-full border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 placeholder:text-gray-500"
+                  disabled={isLoading}
+                />
+                {confirmPassword && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmPassword('')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label="Clear confirm password"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+                {errors.confirmPassword && (
+                  <p className="mt-2 text-sm text-red-600 ml-4">{errors.confirmPassword}</p>
+                )}
+              </div>
+            )}
 
             {/* Password Requirements (only show in register mode) */}
             {mode === 'register' && (
