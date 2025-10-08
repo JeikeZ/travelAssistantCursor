@@ -47,9 +47,9 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     // Only close the modal if in login mode
     // In register mode, ignore backdrop clicks
     if (mode === 'login') {
-      handleClose()
+      onClose()
     }
-  }, [mode, handleClose])
+  }, [mode, onClose])
 
   const validateForm = useCallback((): boolean => {
     const newErrors: typeof errors = {}
@@ -123,6 +123,8 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
   const toggleMode = useCallback(() => {
     setMode(prev => prev === 'login' ? 'register' : 'login')
+    setCredentials({ username: '', password: '' })
+    setConfirmPassword('')
     setErrors({})
   }, [])
 
