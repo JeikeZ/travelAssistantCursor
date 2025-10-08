@@ -1,4 +1,8 @@
 import { PasswordValidation } from '@/types'
+import bcrypt from 'bcrypt'
+
+// Number of salt rounds for bcrypt (10 is a good balance of security and performance)
+const SALT_ROUNDS = 10
 
 /**
  * Validates password requirements:
@@ -50,19 +54,16 @@ export function validateUsername(username: string): { isValid: boolean; error?: 
 }
 
 /**
- * Hash password using a simple hashing method
- * Note: In production, use bcrypt or similar on the server side
+ * Hash password using bcrypt
+ * Uses 10 salt rounds for a good balance of security and performance
  */
 export async function hashPassword(password: string): Promise<string> {
-  // For demo purposes, using a simple base64 encoding
-  // In production, this should be done server-side with bcrypt
-  return Buffer.from(password).toString('base64')
+  return bcrypt.hash(password, SALT_ROUNDS)
 }
 
 /**
- * Verify password against hash
+ * Verify password against bcrypt hash
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const passwordHash = await hashPassword(password)
-  return passwordHash === hash
+  return bcrypt.compare(password, hash)
 }
