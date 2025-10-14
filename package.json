@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.543.0",
     "next": "15.5.2",

@@ -1,3 +1,10 @@
+/**
+ * Client-safe authentication utilities
+ * 
+ * These utilities can be safely imported in both client and server components.
+ * For password hashing (server-only), use auth-utils-server.ts instead.
+ */
+
 import { PasswordValidation } from '@/types'
 
 /**
@@ -49,20 +56,3 @@ export function validateUsername(username: string): { isValid: boolean; error?: 
   return { isValid: true }
 }
 
-/**
- * Hash password using a simple hashing method
- * Note: In production, use bcrypt or similar on the server side
- */
-export async function hashPassword(password: string): Promise<string> {
-  // For demo purposes, using a simple base64 encoding
-  // In production, this should be done server-side with bcrypt
-  return Buffer.from(password).toString('base64')
-}
-
-/**
- * Verify password against hash
- */
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const passwordHash = await hashPassword(password)
-  return passwordHash === hash
-}
