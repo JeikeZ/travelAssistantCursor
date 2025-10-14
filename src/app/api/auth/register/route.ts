@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { validatePassword, validateUsername, hashPassword } from '@/lib/auth-utils'
+import { validatePassword, validateUsername } from '@/lib/auth-utils'
+import { hashPassword } from '@/lib/auth-utils-server'
 import { AuthResponse } from '@/types'
 
 export async function POST(request: NextRequest) {
@@ -40,16 +41,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Hash password
+    // Hash password using bcrypt for all new users
     const hashedPassword = await hashPassword(password)
 
-    // Create new user
+    // Create new user with bcrypt hash
     const { data: newUser, error: insertError } = await supabase
       .from('users')
       .insert([
         {
           username,
           password: hashedPassword,
+          password_hash_type: 'bcrypt',
         },
       ])
       .select('id, username, created_at')

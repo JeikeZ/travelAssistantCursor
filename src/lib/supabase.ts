@@ -27,18 +27,21 @@ export interface Database {
           id: string
           username: string
           password: string
+          password_hash_type: 'base64' | 'bcrypt'
           created_at: string
         }
         Insert: {
           id?: string
           username: string
           password: string
+          password_hash_type?: 'base64' | 'bcrypt'
           created_at?: string
         }
         Update: {
           id?: string
           username?: string
           password?: string
+          password_hash_type?: 'base64' | 'bcrypt'
           created_at?: string
         }
       }
