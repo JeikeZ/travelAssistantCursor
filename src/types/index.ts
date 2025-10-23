@@ -216,6 +216,7 @@ export interface User {
   id: string
   username: string
   created_at: string
+  is_guest?: boolean
 }
 
 export interface UserCredentials {

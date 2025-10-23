@@ -26,22 +26,25 @@ export interface Database {
         Row: {
           id: string
           username: string
-          password: string
-          password_hash_type: 'base64' | 'bcrypt'
+          password: string | null
+          password_hash_type: 'base64' | 'bcrypt' | null
+          is_guest: boolean
           created_at: string
         }
         Insert: {
           id?: string
           username: string
-          password: string
-          password_hash_type?: 'base64' | 'bcrypt'
+          password: string | null
+          password_hash_type?: 'base64' | 'bcrypt' | null
+          is_guest?: boolean
           created_at?: string
         }
         Update: {
           id?: string
           username?: string
-          password?: string
-          password_hash_type?: 'base64' | 'bcrypt'
+          password?: string | null
+          password_hash_type?: 'base64' | 'bcrypt' | null
+          is_guest?: boolean
           created_at?: string
         }
       }
