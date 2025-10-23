@@ -234,3 +234,117 @@ export interface PasswordValidation {
   isValid: boolean
   errors: string[]
 }
+
+// Trip history types
+export interface Trip {
+  id: string
+  user_id: string
+  destination_country: string
+  destination_city: string
+  destination_state?: string
+  destination_display_name?: string
+  duration: number
+  trip_type: TripType
+  status: 'active' | 'completed' | 'archived'
+  completion_percentage: number
+  start_date?: string
+  end_date?: string
+  created_at: string
+  updated_at: string
+  completed_at?: string
+  notes?: string
+  is_favorite: boolean
+}
+
+export interface TripWithItems extends Trip {
+  packing_items: PackingItemDB[]
+}
+
+export interface PackingItemDB {
+  id: string
+  trip_id: string
+  name: string
+  category: PackingCategory
+  essential: boolean
+  packed: boolean
+  custom: boolean
+  quantity: number
+  created_at: string
+  updated_at: string
+  notes?: string
+}
+
+export interface CreateTripRequest {
+  destinationCountry: string
+  destinationCity: string
+  destinationState?: string
+  destinationDisplayName?: string
+  duration: number
+  tripType: TripType
+  startDate?: string
+  endDate?: string
+  notes?: string
+}
+
+export interface UpdateTripRequest {
+  status?: 'active' | 'completed' | 'archived'
+  notes?: string
+  is_favorite?: boolean
+  completion_percentage?: number
+  start_date?: string
+  end_date?: string
+}
+
+export interface TripResponse {
+  success: boolean
+  trip?: Trip
+  error?: string
+}
+
+export interface TripsListResponse {
+  success: boolean
+  trips?: Trip[]
+  total?: number
+  hasMore?: boolean
+  error?: string
+}
+
+export interface TripDetailResponse {
+  success: boolean
+  trip?: Trip
+  packingItems?: PackingItemDB[]
+  statistics?: {
+    totalItems: number
+    packedItems: number
+    completionPercentage: number
+  }
+  error?: string
+}
+
+export interface TripFilters {
+  status?: 'active' | 'completed' | 'archived' | 'all'
+  limit?: number
+  offset?: number
+  sortBy?: 'created_at' | 'updated_at' | 'start_date'
+  sortOrder?: 'asc' | 'desc'
+  search?: string
+}
+
+export interface TripStats {
+  totalTrips: number
+  completedTrips: number
+  activeTrips: number
+  archivedTrips: number
+  totalCountriesVisited: number
+  totalCitiesVisited: number
+  mostVisitedDestinations: Array<{
+    destination: string
+    count: number
+  }>
+}
+
+export interface TripStatsResponse {
+  success: boolean
+  stats?: TripStats
+  error?: string
+}

@@ -48,6 +48,106 @@ export interface Database {
           created_at?: string
         }
       }
+      trips: {
+        Row: {
+          id: string
+          user_id: string
+          destination_country: string
+          destination_city: string
+          destination_state: string | null
+          destination_display_name: string | null
+          duration: number
+          trip_type: string
+          status: 'active' | 'completed' | 'archived'
+          completion_percentage: number
+          start_date: string | null
+          end_date: string | null
+          created_at: string
+          updated_at: string
+          completed_at: string | null
+          notes: string | null
+          is_favorite: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          destination_country: string
+          destination_city: string
+          destination_state?: string | null
+          destination_display_name?: string | null
+          duration: number
+          trip_type: string
+          status?: 'active' | 'completed' | 'archived'
+          completion_percentage?: number
+          start_date?: string | null
+          end_date?: string | null
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+          notes?: string | null
+          is_favorite?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          destination_country?: string
+          destination_city?: string
+          destination_state?: string | null
+          destination_display_name?: string | null
+          duration?: number
+          trip_type?: string
+          status?: 'active' | 'completed' | 'archived'
+          completion_percentage?: number
+          start_date?: string | null
+          end_date?: string | null
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+          notes?: string | null
+          is_favorite?: boolean
+        }
+      }
+      packing_items: {
+        Row: {
+          id: string
+          trip_id: string
+          name: string
+          category: string
+          essential: boolean
+          packed: boolean
+          custom: boolean
+          quantity: number
+          created_at: string
+          updated_at: string
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          name: string
+          category: string
+          essential?: boolean
+          packed?: boolean
+          custom?: boolean
+          quantity?: number
+          created_at?: string
+          updated_at?: string
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          trip_id?: string
+          name?: string
+          category?: string
+          essential?: boolean
+          packed?: boolean
+          custom?: boolean
+          quantity?: number
+          created_at?: string
+          updated_at?: string
+          notes?: string | null
+        }
+      }
     }
   }
 }
