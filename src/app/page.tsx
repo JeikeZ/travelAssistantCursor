@@ -79,7 +79,8 @@ const HomePage = memo(function HomePage() {
         <div className="bg-white border-b border-gray-200 py-3">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <p className="text-sm text-gray-700">
-              Welcome back, <span className="font-semibold">{currentUser.username}</span>!
+              Welcome{currentUser.is_guest ? '' : ' back'}, <span className="font-semibold">{currentUser.username}</span>
+              {currentUser.is_guest && <span className="text-gray-500 ml-1">(Guest)</span>}!
             </p>
             <button
               onClick={handleLogout}

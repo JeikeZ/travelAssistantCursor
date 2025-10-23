@@ -15,10 +15,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user from database including password_hash_type
+    // Get user from database including password_hash_type and is_guest
     const { data: user, error: queryError } = await supabase
       .from('users')
-      .select('id, username, password, password_hash_type, created_at')
+      .select('id, username, password, password_hash_type, is_guest, created_at')
       .eq('username', username)
       .single()
 
@@ -26,6 +26,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<AuthResponse>(
         { success: false, error: 'The username or password entered is incorrect.' },
         { status: 401 }
+      )
+    }
+
+    // Prevent guest users from logging in
+    if (user.is_guest || !user.password) {
+      return NextResponse.json<AuthResponse>(
+        { success: false, error: 'Guest accounts cannot login. Please create a new account or continue as a guest.' },
+        { status: 400 }
       )
     }
 

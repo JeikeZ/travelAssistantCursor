@@ -121,6 +121,36 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     }
   }, [credentials, mode, validateForm, onSuccess, handleClose])
 
+  const handleGuestLogin = useCallback(async () => {
+    setIsLoading(true)
+    setErrors({})
+
+    try {
+      const response = await fetch('/api/auth/guest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.user) {
+        // Store guest user in localStorage
+        localStorage.setItem('user', JSON.stringify(data.user))
+        onSuccess(data.user)
+        handleClose()
+      } else {
+        setErrors({ general: data.error || 'Failed to create guest account' })
+      }
+    } catch (error) {
+      console.error('Guest login error:', error)
+      setErrors({ general: 'An unexpected error occurred. Please try again.' })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [onSuccess, handleClose])
+
   const toggleMode = useCallback(() => {
     setMode(prev => prev === 'login' ? 'register' : 'login')
     setCredentials({ username: '', password: '' })
@@ -283,6 +313,25 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               >
                 {mode === 'login' ? 'Create an account' : 'Already have an account? Login'}
               </button>
+            </div>
+
+            {/* Guest Login Button */}
+            <div className="text-center pt-4 border-t border-gray-300">
+              <button
+                type="button"
+                onClick={handleGuestLogin}
+                disabled={isLoading}
+                className="w-full h-12 bg-gray-400 hover:bg-gray-500 text-white font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {isLoading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                ) : (
+                  'Continue as Guest'
+                )}
+              </button>
+              <p className="text-xs text-gray-600 mt-2">
+                No account needed. Your data will be stored locally.
+              </p>
             </div>
           </form>
         </div>
