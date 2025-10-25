@@ -45,7 +45,7 @@ const HomePage = memo(function HomePage() {
     setIsAuthModalOpen(true)
   }, [])
 
-  const handleTripSubmit = useCallback((tripData: TripData) => {
+  const handleTripSubmit = useCallback(async (tripData: TripData) => {
     if (!currentUser) {
       setIsAuthModalOpen(true)
       return
@@ -53,18 +53,56 @@ const HomePage = memo(function HomePage() {
 
     setIsLoading(true)
     
-    startTransition(() => {
-      try {
-        // Store in localStorage for now (in production, save to Supabase)
-        localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
-        
-        router.push('/packing-list')
-      } catch (error) {
-        console.error('Error creating trip:', error)
-      } finally {
-        setIsLoading(false)
+    try {
+      // For non-guest users, save to database
+      if (!currentUser.is_guest) {
+        const response = await fetch('/api/trips', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            destinationCountry: tripData.destinationCountry,
+            destinationCity: tripData.destinationCity,
+            destinationState: tripData.destinationState,
+            destinationDisplayName: tripData.destinationDisplayName,
+            duration: tripData.duration,
+            tripType: tripData.tripType,
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.trip) {
+            // Store trip ID in localStorage for the packing list page
+            localStorage.setItem('currentTripId', data.trip.id)
+            localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
+            startTransition(() => {
+              router.push('/packing-list')
+            })
+            return
+          }
+        }
       }
-    })
+      
+      // For guest users or if save fails, store in localStorage
+      localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
+      localStorage.removeItem('currentTripId')
+      
+      startTransition(() => {
+        router.push('/packing-list')
+      })
+    } catch (error) {
+      console.error('Error creating trip:', error)
+      // Fallback to localStorage
+      localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
+      localStorage.removeItem('currentTripId')
+      startTransition(() => {
+        router.push('/packing-list')
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }, [router, currentUser, startTransition])
 
   return (
@@ -82,12 +120,36 @@ const HomePage = memo(function HomePage() {
               Welcome{currentUser.is_guest ? '' : ' back'}, <span className="font-semibold">{currentUser.username}</span>
               {currentUser.is_guest && <span className="text-gray-500 ml-1">(Guest)</span>}!
             </p>
-            <button
-              onClick={handleLogout}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              Logout
-            </button>
+            <div className="flex items-center gap-4">
+              {!currentUser.is_guest && (
+                <button
+                  onClick={() => router.push('/trips')}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                  </svg>
+                  My Trips
+                </button>
+              )}
+              <button
+                onClick={handleLogout}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Guest User Banner */}
+      {currentUser && currentUser.is_guest && (
+        <div className="bg-blue-50 border-b border-blue-200 py-3">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p className="text-sm text-blue-800 text-center">
+              💡 <span className="font-medium">Create an account</span> to save your trips permanently and access them from any device!
+            </p>
           </div>
         </div>
       )}

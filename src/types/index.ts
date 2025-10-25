@@ -234,3 +234,214 @@ export interface PasswordValidation {
   isValid: boolean
   errors: string[]
 }
+
+// Trip History Database Types
+export type TripStatus = 'active' | 'completed' | 'archived'
+
+export interface Trip {
+  id: string
+  user_id: string
+  destination_country: string
+  destination_city: string
+  destination_state: string | null
+  destination_display_name: string | null
+  duration: number
+  trip_type: 'business' | 'leisure' | 'beach' | 'hiking' | 'city' | 'winter' | 'backpacking'
+  status: TripStatus
+  completion_percentage: number
+  start_date: string | null
+  end_date: string | null
+  created_at: string
+  updated_at: string
+  completed_at: string | null
+  notes: string | null
+  is_favorite: boolean
+}
+
+export interface TripInsert {
+  id?: string
+  user_id: string
+  destination_country: string
+  destination_city: string
+  destination_state?: string | null
+  destination_display_name?: string | null
+  duration: number
+  trip_type: 'business' | 'leisure' | 'beach' | 'hiking' | 'city' | 'winter' | 'backpacking'
+  status?: TripStatus
+  completion_percentage?: number
+  start_date?: string | null
+  end_date?: string | null
+  notes?: string | null
+  is_favorite?: boolean
+}
+
+export interface TripUpdate {
+  destination_country?: string
+  destination_city?: string
+  destination_state?: string | null
+  destination_display_name?: string | null
+  duration?: number
+  trip_type?: 'business' | 'leisure' | 'beach' | 'hiking' | 'city' | 'winter' | 'backpacking'
+  status?: TripStatus
+  completion_percentage?: number
+  start_date?: string | null
+  end_date?: string | null
+  notes?: string | null
+  is_favorite?: boolean
+  updated_at?: string
+  completed_at?: string | null
+}
+
+export interface PackingItemDb {
+  id: string
+  trip_id: string
+  name: string
+  category: PackingCategory
+  essential: boolean
+  packed: boolean
+  custom: boolean
+  quantity: number
+  created_at: string
+  updated_at: string
+  notes: string | null
+}
+
+export interface PackingItemInsert {
+  id?: string
+  trip_id: string
+  name: string
+  category: PackingCategory
+  essential?: boolean
+  packed?: boolean
+  custom?: boolean
+  quantity?: number
+  notes?: string | null
+}
+
+export interface PackingItemUpdate {
+  name?: string
+  category?: PackingCategory
+  essential?: boolean
+  packed?: boolean
+  custom?: boolean
+  quantity?: number
+  notes?: string | null
+  updated_at?: string
+}
+
+// API Request/Response Types for Trips
+export interface CreateTripRequest {
+  destinationCountry: string
+  destinationCity: string
+  destinationState?: string
+  destinationDisplayName?: string
+  duration: number
+  tripType: 'business' | 'leisure' | 'beach' | 'hiking' | 'city' | 'winter' | 'backpacking'
+  startDate?: string
+  endDate?: string
+  notes?: string
+}
+
+export interface CreateTripResponse {
+  success: boolean
+  trip?: Trip
+  error?: string
+}
+
+export interface GetTripsQuery {
+  status?: TripStatus | 'all'
+  limit?: number
+  offset?: number
+  sortBy?: 'created_at' | 'updated_at' | 'start_date'
+  sortOrder?: 'asc' | 'desc'
+}
+
+export interface GetTripsResponse {
+  trips: Trip[]
+  total: number
+  hasMore: boolean
+}
+
+export interface GetTripDetailResponse {
+  trip: Trip
+  packingItems: PackingItemDb[]
+  statistics: {
+    totalItems: number
+    packedItems: number
+    completionPercentage: number
+  }
+}
+
+export interface UpdateTripRequest {
+  status?: TripStatus
+  notes?: string
+  isFavorite?: boolean
+  completionPercentage?: number
+  startDate?: string
+  endDate?: string
+}
+
+export interface DuplicateTripRequest {
+  newStartDate?: string
+  newEndDate?: string
+}
+
+export interface DuplicateTripResponse {
+  success: boolean
+  newTrip?: Trip
+  error?: string
+}
+
+export interface TripStatistics {
+  totalTrips: number
+  completedTrips: number
+  activeTrips: number
+  archivedTrips: number
+  totalCountriesVisited: number
+  totalCitiesVisited: number
+  mostVisitedDestinations: Array<{
+    destination: string
+    count: number
+  }>
+  favoriteTrips: Trip[]
+}
+
+// Packing Items API Types
+export interface AddPackingItemRequest {
+  name: string
+  category: PackingCategory
+  essential: boolean
+  quantity?: number
+  notes?: string
+}
+
+export interface UpdatePackingItemRequest {
+  name?: string
+  packed?: boolean
+  quantity?: number
+  notes?: string
+  category?: PackingCategory
+  essential?: boolean
+}
+
+export interface BulkUpdateItemsRequest {
+  updates: Array<{
+    itemId: string
+    packed?: boolean
+    name?: string
+    quantity?: number
+  }>
+}
+
+// Trip Filters and Sort Options
+export interface TripFilters {
+  status?: TripStatus | 'all'
+  searchQuery?: string
+  startDateFrom?: string
+  startDateTo?: string
+}
+
+export interface SortOptions {
+  sortBy: 'created_at' | 'updated_at' | 'start_date'
+  sortOrder: 'asc' | 'desc'
+}
