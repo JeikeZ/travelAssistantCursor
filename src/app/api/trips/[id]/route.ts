@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import type { Trip, PackingItemDb, UpdateTripRequest } from '@/types'
 
 // Helper function to get user from session
@@ -22,7 +22,7 @@ async function getUserFromSession() {
 
 // Helper function to verify user owns the trip
 async function verifyTripOwnership(tripId: string, userId: string): Promise<boolean> {
-  const { data: trip } = await supabase
+  const { data: trip } = await supabaseAdmin
     .from('trips')
     .select('user_id')
     .eq('id', tripId)
@@ -57,7 +57,7 @@ export async function GET(
     }
 
     // Fetch trip details
-    const { data: trip, error: tripError } = await supabase
+    const { data: trip, error: tripError } = await supabaseAdmin
       .from('trips')
       .select('*')
       .eq('id', id)
@@ -210,7 +210,7 @@ export async function DELETE(
     }
 
     // Delete trip (cascade will delete packing items)
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('trips')
       .delete()
       .eq('id', id)
