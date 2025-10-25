@@ -27,8 +27,14 @@ export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
     setIsLoading(true)
     setError(null)
 
-    const queryFilters = filters || currentFilters
-    setCurrentFilters(queryFilters)
+    // Use provided filters or default to empty object
+    // Don't rely on currentFilters state to avoid recreation loops
+    const queryFilters = filters || {}
+    
+    // Update current filters state if new filters were provided
+    if (filters) {
+      setCurrentFilters(filters)
+    }
 
     try {
       const params = new URLSearchParams()
@@ -56,7 +62,7 @@ export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [currentFilters])
+  }, [])
 
   const createTrip = useCallback(async (tripData: CreateTripRequest): Promise<Trip | null> => {
     setError(null)
@@ -194,14 +200,11 @@ export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
   }, [fetchTrips])
 
   const refreshTrips = useCallback(async () => {
-    await fetchTrips()
-  }, [fetchTrips])
+    await fetchTrips(currentFilters)
+  }, [fetchTrips, currentFilters])
 
-  // Fetch trips on mount
-  useEffect(() => {
-    fetchTrips()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run on mount
+  // Note: Initial fetch is handled by the consuming component
+  // This allows better control over when and how to fetch trips
 
   return {
     trips,

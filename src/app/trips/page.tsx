@@ -36,6 +36,17 @@ export default function TripsPage() {
 
   const { stats, isLoading: statsLoading } = useTripStats()
 
+  // Fetch trips on mount
+  useEffect(() => {
+    fetchTrips({
+      status: filters.status,
+      sortBy: sort.sortBy,
+      sortOrder: sort.sortOrder,
+      limit: 50,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount
+
   // Re-fetch trips when filters or sort changes
   useEffect(() => {
     fetchTrips({
@@ -44,7 +55,10 @@ export default function TripsPage() {
       sortOrder: sort.sortOrder,
       limit: 50,
     })
-  }, [filters, sort, fetchTrips])
+    // fetchTrips is intentionally excluded from dependencies to prevent infinite loops
+    // The function is stable with empty dependency array in the hook
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sort])
 
   const handleFilterChange = (newFilters: TripFiltersType) => {
     setFilters(newFilters)
