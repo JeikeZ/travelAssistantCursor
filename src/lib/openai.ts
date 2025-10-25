@@ -1,22 +1,31 @@
 import OpenAI from 'openai'
 import { TripData, PackingItem, AppError } from '@/types'
 
-let openai: OpenAI | null = null
-
-function getOpenAIClient(): OpenAI | null {
-  if (!openai && process.env.OPENAI_API_KEY) {
-    try {
-      openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-        timeout: 30000, // 30 seconds
-        maxRetries: 2,
-      })
-    } catch (error) {
-      console.error('Failed to initialize OpenAI client:', error)
-      return null
-    }
+// Factory function to create OpenAI client on-demand
+// This is better for serverless environments than singleton pattern
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY
+  
+  if (!apiKey) {
+    throw new PackingListError(
+      'OpenAI API key is not configured. Please add your API key to environment variables.',
+      'API_KEY_MISSING'
+    )
   }
-  return openai
+
+  try {
+    return new OpenAI({
+      apiKey,
+      timeout: 25000, // 25 seconds - slightly less than Vercel timeout
+      maxRetries: 1,   // Reduce retries to avoid timeout issues
+    })
+  } catch (error) {
+    console.error('Failed to initialize OpenAI client:', error)
+    throw new PackingListError(
+      'Failed to initialize OpenAI service',
+      'SERVICE_INIT_FAILED'
+    )
+  }
 }
 
 export class PackingListError extends AppError {
@@ -28,13 +37,8 @@ export class PackingListError extends AppError {
 
 export async function generatePackingList(tripData: TripData): Promise<PackingItem[]> {
   try {
+    // Get fresh client instance (better for serverless)
     const client = getOpenAIClient()
-    if (!client) {
-      if (!process.env.OPENAI_API_KEY) {
-        throw new PackingListError('OpenAI API key is not configured. Please add your API key to the .env.local file.', 'API_KEY_MISSING')
-      }
-      throw new PackingListError('OpenAI service is not available', 'SERVICE_UNAVAILABLE')
-    }
 
     // Validate input
     if (!tripData.destinationCountry || !tripData.destinationCity || !tripData.duration || !tripData.tripType) {
@@ -140,24 +144,53 @@ Return only the JSON array, no additional text.`
 
     return packingList
   } catch (error) {
-    console.error('Error generating packing list:', error)
+    // Enhanced error logging for debugging
+    console.error('Error generating packing list:', {
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      hasApiKey: !!process.env.OPENAI_API_KEY,
+      apiKeyPrefix: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 7) + '...' : 'NOT_SET',
+      tripData: {
+        country: tripData.destinationCountry,
+        city: tripData.destinationCity,
+        duration: tripData.duration,
+        type: tripData.tripType
+      }
+    })
     
     // Re-throw PackingListError as-is
     if (error instanceof PackingListError) {
       throw error
     }
     
-    // Wrap other errors
+    // Handle OpenAI specific errors
     if (error instanceof Error) {
-      throw new PackingListError(error.message, 'UNKNOWN_ERROR')
+      // Check for specific OpenAI error patterns
+      if (error.message.includes('API key')) {
+        throw new PackingListError('Invalid OpenAI API key', 'API_KEY_INVALID')
+      }
+      if (error.message.includes('timeout') || error.message.includes('timed out')) {
+        throw new PackingListError('OpenAI request timed out', 'TIMEOUT')
+      }
+      if (error.message.includes('rate limit')) {
+        throw new PackingListError('OpenAI rate limit exceeded', 'RATE_LIMIT')
+      }
+      if (error.message.includes('insufficient_quota')) {
+        throw new PackingListError('OpenAI account has insufficient credits', 'INSUFFICIENT_QUOTA')
+      }
+      
+      // Generic error wrapping
+      throw new PackingListError(`OpenAI API error: ${error.message}`, 'OPENAI_ERROR')
     }
     
-    // Fallback packing list for unknown errors
-    console.warn('Falling back to default packing list due to unknown error')
-    return getDefaultPackingList()
+    // Fallback for completely unknown errors
+    throw new PackingListError('Unknown error occurred', 'UNKNOWN_ERROR')
   }
 }
 
+// Fallback packing list is no longer used in production
+// Kept for reference or emergency use only
 function getDefaultPackingList(): PackingItem[] {
   const essentialItems: Omit<PackingItem, 'id' | 'packed' | 'custom'>[] = [
     { name: 'Passport', category: 'travel_documents', essential: true },
