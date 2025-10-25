@@ -39,7 +39,18 @@ const HomePage = memo(function HomePage() {
     setIsAuthModalOpen(false)
   }, [])
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    try {
+      // Call logout API to clear session cookie
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      })
+    } catch (error) {
+      console.error('Error during logout:', error)
+      // Continue with client-side logout even if API call fails
+    }
+    
+    // Clear client-side state
     setCurrentUser(null)
     localStorage.removeItem('user')
     setIsAuthModalOpen(true)
