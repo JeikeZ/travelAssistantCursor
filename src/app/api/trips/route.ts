@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import type { CreateTripRequest, Trip } from '@/types'
 
 // Helper function to get user from session
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert trip into database
-    const { data: trip, error } = await supabase
+    const { data: trip, error } = await supabaseAdmin
       .from('trips')
       .insert({
         user_id: user.id,
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc'
 
     // Build query
-    let query = supabase
+    let query = supabaseAdmin
       .from('trips')
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)

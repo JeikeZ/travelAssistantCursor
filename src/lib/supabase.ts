@@ -4,19 +4,33 @@ import { createClient } from '@supabase/supabase-js'
 // Get environment variables from .env.local
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables. Please check your .env.local file.')
 }
 
-// Create a single supabase client for interacting with your database
+// Create a supabase client for use in client-side code (uses anon key)
+// This client respects RLS policies
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
   },
 })
+
+// Create a supabase admin client for use in server-side API routes (uses service role key)
+// This client bypasses RLS policies - use ONLY in API routes after verifying authentication
+// NEVER expose this client to the frontend
+export const supabaseAdmin = supabaseServiceRoleKey 
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    })
+  : supabase // Fallback to regular client if service role key not provided
 
 // Database types for type safety
 export interface Database {
