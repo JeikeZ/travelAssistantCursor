@@ -1,22 +1,33 @@
 import OpenAI from 'openai'
 import { TripData, PackingItem, AppError } from '@/types'
 
-let openai: OpenAI | null = null
-
-function getOpenAIClient(): OpenAI | null {
-  if (!openai && process.env.OPENAI_API_KEY) {
-    try {
-      openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-        timeout: 30000, // 30 seconds
-        maxRetries: 2,
-      })
-    } catch (error) {
-      console.error('Failed to initialize OpenAI client:', error)
-      return null
-    }
+// Create a new OpenAI client instance for each request (serverless-friendly)
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY
+  
+  if (!apiKey) {
+    console.error('OPENAI_API_KEY environment variable is not set')
+    throw new PackingListError(
+      'OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables.',
+      'API_KEY_MISSING'
+    )
   }
-  return openai
+
+  console.log('Creating OpenAI client with API key:', apiKey.substring(0, 7) + '...')
+  
+  try {
+    return new OpenAI({
+      apiKey: apiKey,
+      timeout: 35000, // 35 seconds - increased for better reliability
+      maxRetries: 3, // Increased retries
+    })
+  } catch (error) {
+    console.error('Failed to initialize OpenAI client:', error)
+    throw new PackingListError(
+      'Failed to initialize OpenAI service',
+      'CLIENT_INIT_FAILED'
+    )
+  }
 }
 
 export class PackingListError extends AppError {
@@ -27,14 +38,14 @@ export class PackingListError extends AppError {
 }
 
 export async function generatePackingList(tripData: TripData): Promise<PackingItem[]> {
+  console.log('Starting packing list generation for:', {
+    destination: `${tripData.destinationCity}, ${tripData.destinationCountry}`,
+    duration: tripData.duration,
+    tripType: tripData.tripType
+  })
+  
   try {
     const client = getOpenAIClient()
-    if (!client) {
-      if (!process.env.OPENAI_API_KEY) {
-        throw new PackingListError('OpenAI API key is not configured. Please add your API key to the .env.local file.', 'API_KEY_MISSING')
-      }
-      throw new PackingListError('OpenAI service is not available', 'SERVICE_UNAVAILABLE')
-    }
 
     // Validate input
     if (!tripData.destinationCountry || !tripData.destinationCity || !tripData.duration || !tripData.tripType) {
@@ -72,12 +83,13 @@ Mark items as essential if they are critical for travel (passport, medication, p
 
 Return only the JSON array, no additional text.`
 
+    console.log('Sending request to OpenAI...')
     const response = await client.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini', // Using gpt-4o-mini for better reliability and cost-effectiveness
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful travel assistant that generates comprehensive, location-specific packing lists. Always respond with valid JSON only. Ensure the response is an array of objects with name, category, and essential fields.',
+          content: 'You are a helpful travel assistant that generates comprehensive, location-specific packing lists. CRITICAL: You must respond with a valid JSON array ONLY. Do not include any markdown formatting, code blocks, or explanatory text. Return ONLY the raw JSON array of objects with name, category, and essential fields.',
         },
         {
           role: 'user',
@@ -85,18 +97,54 @@ Return only the JSON array, no additional text.`
         },
       ],
       temperature: 0.7,
-      max_tokens: 2000,
+      max_tokens: 3000, // Increased for longer trips
+      response_format: { type: 'json_object' }, // Force JSON response
+    })
+    
+    console.log('Received response from OpenAI:', {
+      finishReason: response.choices[0]?.finish_reason,
+      hasContent: !!response.choices[0]?.message?.content,
+      usage: response.usage
     })
 
-    const content = response.choices[0]?.message?.content?.trim()
+    // Validate response structure
+    if (!response.choices || response.choices.length === 0) {
+      throw new PackingListError('No choices in OpenAI response', 'INVALID_RESPONSE')
+    }
+
+    const choice = response.choices[0]
+    
+    // Check finish reason
+    if (choice.finish_reason !== 'stop') {
+      console.warn('OpenAI response did not finish normally:', choice.finish_reason)
+      if (choice.finish_reason === 'length') {
+        throw new PackingListError('Response was cut off due to length limit', 'RESPONSE_TOO_LONG')
+      }
+      if (choice.finish_reason === 'content_filter') {
+        throw new PackingListError('Content was filtered by OpenAI', 'CONTENT_FILTERED')
+      }
+    }
+
+    const content = choice.message?.content?.trim()
     if (!content) {
       throw new PackingListError('Empty response from AI service', 'EMPTY_RESPONSE')
     }
 
+    console.log('Raw OpenAI response (first 200 chars):', content.substring(0, 200))
+
     // Parse the JSON response with better error handling
     let items: Omit<PackingItem, 'id' | 'packed' | 'custom'>[]
     try {
-      const parsed = JSON.parse(content)
+      // Remove potential markdown code blocks that OpenAI sometimes adds
+      const sanitizedContent = content
+        .replace(/^```json\s*/i, '')  // Remove opening ```json
+        .replace(/^```\s*/i, '')       // Remove opening ```
+        .replace(/\s*```$/i, '')       // Remove closing ```
+        .trim()
+      
+      console.log('Sanitized content (first 200 chars):', sanitizedContent.substring(0, 200))
+      
+      const parsed = JSON.parse(sanitizedContent)
       if (!Array.isArray(parsed)) {
         throw new Error('Response is not an array')
       }
@@ -147,14 +195,65 @@ Return only the JSON array, no additional text.`
       throw error
     }
     
-    // Wrap other errors
+    // Handle OpenAI-specific errors
     if (error instanceof Error) {
-      throw new PackingListError(error.message, 'UNKNOWN_ERROR')
+      const errorMessage = error.message.toLowerCase()
+      
+      // Check for specific OpenAI error types
+      if (errorMessage.includes('api key') || errorMessage.includes('unauthorized') || errorMessage.includes('authentication')) {
+        throw new PackingListError(
+          'Invalid or missing OpenAI API key. Please check your API key configuration.',
+          'INVALID_API_KEY'
+        )
+      }
+      
+      if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+        throw new PackingListError(
+          'OpenAI rate limit exceeded. Please try again in a moment.',
+          'RATE_LIMIT_EXCEEDED'
+        )
+      }
+      
+      if (errorMessage.includes('quota') || errorMessage.includes('insufficient_quota')) {
+        throw new PackingListError(
+          'OpenAI quota exceeded. Please check your billing settings.',
+          'QUOTA_EXCEEDED'
+        )
+      }
+      
+      if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+        throw new PackingListError(
+          'Request to OpenAI timed out. Please try again.',
+          'TIMEOUT'
+        )
+      }
+      
+      if (errorMessage.includes('network') || errorMessage.includes('fetch failed')) {
+        throw new PackingListError(
+          'Network error connecting to OpenAI. Please check your connection.',
+          'NETWORK_ERROR'
+        )
+      }
+      
+      // Generic error
+      console.error('Unexpected error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 3)
+      })
+      
+      throw new PackingListError(
+        `Failed to generate packing list: ${error.message}`,
+        'GENERATION_FAILED'
+      )
     }
     
-    // Fallback packing list for unknown errors
-    console.warn('Falling back to default packing list due to unknown error')
-    return getDefaultPackingList()
+    // Fallback for completely unknown errors
+    console.error('Unknown error type:', error)
+    throw new PackingListError(
+      'An unexpected error occurred while generating your packing list.',
+      'UNKNOWN_ERROR'
+    )
   }
 }
 

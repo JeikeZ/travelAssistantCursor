@@ -3,7 +3,8 @@
   "framework": "nextjs",
   "functions": {
     "src/app/api/generate-packing-list/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 45,
+      "memory": 1024
     }
   },
   "headers": [
