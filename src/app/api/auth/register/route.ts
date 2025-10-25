@@ -65,10 +65,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json<AuthResponse>(
+    // Create session cookie
+    const session = {
+      user: newUser
+    }
+
+    const response = NextResponse.json<AuthResponse>(
       { success: true, user: newUser },
       { status: 201 }
     )
+
+    // Set session cookie
+    response.cookies.set('session', JSON.stringify(session), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: '/',
+    })
+
+    return response
   } catch (error) {
     console.error('Registration error:', error)
     return NextResponse.json<AuthResponse>(
