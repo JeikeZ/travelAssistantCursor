@@ -10,7 +10,7 @@ import { TripStatistics } from '@/components/trips/TripStatistics'
 import { Button } from '@/components/ui/Button'
 import { Loading } from '@/components/ui/Loading'
 import { useToast } from '@/components/ui/Toast'
-import type { TripFilters as TripFiltersType, SortOptions } from '@/types'
+import type { TripFilters as TripFiltersType, SortOptions, User } from '@/types'
 
 export default function TripsPage() {
   const router = useRouter()
@@ -18,6 +18,7 @@ export default function TripsPage() {
   const [showStats, setShowStats] = useState(true)
   const [filters, setFilters] = useState<TripFiltersType>({})
   const [sort, setSort] = useState<SortOptions>({ sortBy: 'created_at', sortOrder: 'desc' })
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
 
   const {
     trips,
@@ -36,29 +37,46 @@ export default function TripsPage() {
 
   const { stats, isLoading: statsLoading } = useTripStats()
 
-  // Fetch trips on mount
+  // Get current user from localStorage
   useEffect(() => {
-    fetchTrips({
-      status: filters.status,
-      sortBy: sort.sortBy,
-      sortOrder: sort.sortOrder,
-      limit: 50,
-    })
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser))
+      } catch (error) {
+        console.error('Error parsing stored user:', error)
+        localStorage.removeItem('user')
+      }
+    }
+  }, [])
+
+  // Fetch trips on mount and when user changes
+  useEffect(() => {
+    if (currentUser) {
+      fetchTrips({
+        status: filters.status,
+        sortBy: sort.sortBy,
+        sortOrder: sort.sortOrder,
+        limit: 50,
+      })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run on mount
+  }, [currentUser?.id]) // Re-fetch when user changes!
 
   // Re-fetch trips when filters or sort changes
   useEffect(() => {
-    fetchTrips({
-      status: filters.status,
-      sortBy: sort.sortBy,
-      sortOrder: sort.sortOrder,
-      limit: 50,
-    })
+    if (currentUser) {
+      fetchTrips({
+        status: filters.status,
+        sortBy: sort.sortBy,
+        sortOrder: sort.sortOrder,
+        limit: 50,
+      })
+    }
     // fetchTrips is intentionally excluded from dependencies to prevent infinite loops
     // The function is stable with empty dependency array in the hook
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, sort])
+  }, [filters, sort, currentUser])
 
   const handleFilterChange = (newFilters: TripFiltersType) => {
     setFilters(newFilters)

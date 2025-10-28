@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabaseServer } from '@/lib/supabase-server'
+import { createAuthenticatedResponse } from '@/lib/api-utils'
 import type { Trip, PackingItemDb, UpdateTripRequest } from '@/types'
 
 // Helper function to get user from session
@@ -91,7 +92,7 @@ export async function GET(
     const packedItems = items.filter(item => item.packed).length
     const completionPercentage = totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0
 
-    return NextResponse.json({
+    return createAuthenticatedResponse({
       trip: trip as Trip,
       packingItems: items as PackingItemDb[],
       statistics: {

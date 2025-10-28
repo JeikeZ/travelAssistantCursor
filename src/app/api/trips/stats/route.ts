@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabaseServer } from '@/lib/supabase-server'
+import { createAuthenticatedResponse } from '@/lib/api-utils'
 import type { TripStatistics, Trip } from '@/types'
 
 // Helper function to get user from session
@@ -94,7 +95,7 @@ export async function GET() {
       favoriteTrips,
     }
 
-    return NextResponse.json(statistics)
+    return createAuthenticatedResponse(statistics)
   } catch (error) {
     console.error('Error in GET /api/trips/stats:', error)
     return NextResponse.json(

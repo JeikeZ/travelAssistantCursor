@@ -15,7 +15,7 @@ export function createErrorResponse(
   )
 }
 
-// Standard success response with caching headers
+// Standard success response with caching headers (for public APIs)
 export function createSuccessResponse<T>(
   data: T,
   cacheMaxAge: number = 3600 // 1 hour default
@@ -29,6 +29,22 @@ export function createSuccessResponse<T>(
   
   // Note: Content-Encoding should only be set by the server/CDN when actually compressing
   // response.headers.set('Content-Encoding', 'gzip') // REMOVED - causes response parsing issues
+  
+  return response
+}
+
+// Success response for authenticated endpoints (no caching)
+export function createAuthenticatedResponse<T>(
+  data: T,
+  statusCode: number = 200
+): NextResponse<T> {
+  const response = NextResponse.json(data, { status: statusCode })
+  
+  // Prevent caching of authenticated responses
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  response.headers.set('Pragma', 'no-cache')
+  response.headers.set('Expires', '0')
+  response.headers.set('Vary', 'Cookie')
   
   return response
 }

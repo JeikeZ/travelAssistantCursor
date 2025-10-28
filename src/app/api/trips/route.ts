@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabaseServer } from '@/lib/supabase-server'
+import { createAuthenticatedResponse } from '@/lib/api-utils'
 import type { CreateTripRequest, Trip } from '@/types'
 
 // Helper function to get user from session
@@ -157,7 +158,7 @@ export async function GET(request: NextRequest) {
     const total = count || 0
     const hasMore = offset + limit < total
 
-    return NextResponse.json({
+    return createAuthenticatedResponse({
       trips: trips as Trip[],
       total,
       hasMore,
