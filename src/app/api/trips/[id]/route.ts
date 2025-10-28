@@ -4,6 +4,10 @@ import { supabaseServer } from '@/lib/supabase-server'
 import { createAuthenticatedResponse } from '@/lib/api-utils'
 import type { Trip, PackingItemDb, UpdateTripRequest } from '@/types'
 
+// Force dynamic rendering - no caching for user-specific data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // Helper function to get user from session
 async function getUserFromSession() {
   const cookieStore = await cookies()
@@ -92,7 +96,7 @@ export async function GET(
     const packedItems = items.filter(item => item.packed).length
     const completionPercentage = totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0
 
-    return createAuthenticatedResponse({
+    const response = NextResponse.json({
       trip: trip as Trip,
       packingItems: items as PackingItemDb[],
       statistics: {
@@ -101,6 +105,12 @@ export async function GET(
         completionPercentage,
       },
     })
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in GET /api/trips/[id]:', error)
     return NextResponse.json(
@@ -172,10 +182,16 @@ export async function PUT(
       )
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       trip: trip as Trip,
     })
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in PUT /api/trips/[id]:', error)
     return NextResponse.json(
@@ -224,9 +240,15 @@ export async function DELETE(
       )
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
     })
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in DELETE /api/trips/[id]:', error)
     return NextResponse.json(

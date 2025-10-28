@@ -57,8 +57,32 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // User-specific endpoints - NO public caching
       {
-        source: '/api/(.*)',
+        source: '/api/trips/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Vary',
+            value: 'Cookie',
+          },
+        ],
+      },
+      {
+        source: '/api/auth/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      // Public endpoints - can be cached
+      {
+        source: '/api/(weather|cities|generate-packing-list)',
         headers: [
           {
             key: 'Cache-Control',

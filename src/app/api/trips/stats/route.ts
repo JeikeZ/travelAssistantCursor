@@ -4,6 +4,10 @@ import { supabaseServer } from '@/lib/supabase-server'
 import { createAuthenticatedResponse } from '@/lib/api-utils'
 import type { TripStatistics, Trip } from '@/types'
 
+// Force dynamic rendering - no caching for user-specific data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // Helper function to get user from session
 async function getUserFromSession() {
   const cookieStore = await cookies()
@@ -95,7 +99,13 @@ export async function GET() {
       favoriteTrips,
     }
 
-    return createAuthenticatedResponse(statistics)
+    const response = NextResponse.json(statistics)
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in GET /api/trips/stats:', error)
     return NextResponse.json(

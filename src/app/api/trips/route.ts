@@ -4,6 +4,10 @@ import { supabaseServer } from '@/lib/supabase-server'
 import { createAuthenticatedResponse } from '@/lib/api-utils'
 import type { CreateTripRequest, Trip } from '@/types'
 
+// Force dynamic rendering - no caching for user-specific data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // Helper function to get user from session
 async function getUserFromSession() {
   const cookieStore = await cookies()
@@ -87,10 +91,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       trip: trip as Trip,
     })
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in POST /api/trips:', error)
     return NextResponse.json(
@@ -158,11 +168,17 @@ export async function GET(request: NextRequest) {
     const total = count || 0
     const hasMore = offset + limit < total
 
-    return createAuthenticatedResponse({
+    const response = NextResponse.json({
       trips: trips as Trip[],
       total,
       hasMore,
     })
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in GET /api/trips:', error)
     return NextResponse.json(
