@@ -3,6 +3,10 @@ import { cookies } from 'next/headers'
 import { supabaseServer } from '@/lib/supabase-server'
 import type { PackingItemDb, AddPackingItemRequest } from '@/types'
 
+// Force dynamic rendering - no caching for user-specific data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // Helper function to get user from session
 async function getUserFromSession() {
   const cookieStore = await cookies()
@@ -96,10 +100,16 @@ export async function POST(
       .update({ updated_at: new Date().toISOString() } as never)
       .eq('id', tripId)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       item: item as PackingItemDb,
     })
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in POST /api/trips/[id]/items:', error)
     return NextResponse.json(
@@ -150,9 +160,15 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       items: items as PackingItemDb[],
     })
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in GET /api/trips/[id]/items:', error)
     return NextResponse.json(

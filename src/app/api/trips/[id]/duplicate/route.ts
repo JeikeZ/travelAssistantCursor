@@ -3,6 +3,10 @@ import { cookies } from 'next/headers'
 import { supabaseServer } from '@/lib/supabase-server'
 import type { Trip, DuplicateTripRequest } from '@/types'
 
+// Force dynamic rendering - no caching for user-specific data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // Helper function to get user from session
 async function getUserFromSession() {
   const cookieStore = await cookies()
@@ -116,10 +120,16 @@ export async function POST(
     if (itemsError) {
       console.error('Error fetching original packing items:', itemsError)
       // Return the trip even if items fail - user can add items later
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         newTrip: typedNewTrip,
       })
+
+      // Ensure no public caching of user-specific data
+      response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+      response.headers.set('Vary', 'Cookie')
+
+      return response
     }
 
     // Type cast for originalItems
@@ -159,10 +169,16 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       newTrip: typedNewTrip,
     })
+
+    // Ensure no public caching of user-specific data
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
+
+    return response
   } catch (error) {
     console.error('Error in POST /api/trips/[id]/duplicate:', error)
     return NextResponse.json(
