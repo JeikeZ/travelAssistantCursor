@@ -44,7 +44,14 @@ export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
       if (queryFilters.sortBy) params.append('sortBy', queryFilters.sortBy)
       if (queryFilters.sortOrder) params.append('sortOrder', queryFilters.sortOrder)
 
-      const response = await fetch(`/api/trips?${params.toString()}`)
+      const response = await fetch(`/api/trips?${params.toString()}`, {
+        cache: 'no-store',
+        credentials: 'same-origin',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      })
 
       if (!response.ok) {
         const data = await response.json()

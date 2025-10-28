@@ -108,6 +108,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       if (data.success && data.user) {
         // Store user in localStorage
         localStorage.setItem('user', JSON.stringify(data.user))
+        
+        // Clear any cached trip data
+        localStorage.removeItem('currentTrip')
+        localStorage.removeItem('currentTripId')
+        localStorage.removeItem('currentPackingList')
+        
         onSuccess(data.user)
         handleClose()
       } else {
@@ -138,6 +144,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       if (data.success && data.user) {
         // Store guest user in localStorage
         localStorage.setItem('user', JSON.stringify(data.user))
+        
+        // Clear any cached trip data
+        localStorage.removeItem('currentTrip')
+        localStorage.removeItem('currentTripId')
+        localStorage.removeItem('currentPackingList')
+        
         onSuccess(data.user)
         handleClose()
       } else {

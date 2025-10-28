@@ -37,7 +37,10 @@ const HomePage = memo(function HomePage() {
   const handleAuthSuccess = useCallback((user: User) => {
     setCurrentUser(user)
     setIsAuthModalOpen(false)
-  }, [])
+    
+    // Force refresh to clear any cached data
+    router.refresh()
+  }, [router])
 
   const handleLogout = useCallback(async () => {
     try {
@@ -50,11 +53,18 @@ const HomePage = memo(function HomePage() {
       // Continue with client-side logout even if API call fails
     }
     
+    // Clear ALL localStorage (not just user)
+    localStorage.clear()
+    
     // Clear client-side state
     setCurrentUser(null)
-    localStorage.removeItem('user')
+    
+    // Force refresh to clear cached data
+    router.refresh()
+    
+    // Show auth modal
     setIsAuthModalOpen(true)
-  }, [])
+  }, [router])
 
   const handleTripSubmit = useCallback(async (tripData: TripData) => {
     if (!currentUser) {

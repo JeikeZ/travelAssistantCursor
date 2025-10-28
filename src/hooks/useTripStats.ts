@@ -19,7 +19,14 @@ export function useTripStats(): UseTripStatsReturn {
     setError(null)
 
     try {
-      const response = await fetch('/api/trips/stats')
+      const response = await fetch('/api/trips/stats', {
+        cache: 'no-store',
+        credentials: 'same-origin',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      })
 
       if (!response.ok) {
         const data = await response.json()

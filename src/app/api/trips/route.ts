@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabaseServer } from '@/lib/supabase-server'
+import { createAuthenticatedResponse } from '@/lib/api-utils'
 import type { CreateTripRequest, Trip } from '@/types'
 
 // Force dynamic rendering - no caching for user-specific data
