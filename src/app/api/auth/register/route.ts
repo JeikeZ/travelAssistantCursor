@@ -4,6 +4,10 @@ import { validatePassword, validateUsername } from '@/lib/auth-utils'
 import { hashPassword } from '@/lib/auth-utils-server'
 import { AuthResponse } from '@/types'
 
+// Force dynamic rendering - no caching for auth endpoints
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -81,6 +85,9 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 30, // 30 days
       path: '/',
     })
+
+    // Ensure no caching of auth responses
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
 
     return response
   } catch (error) {

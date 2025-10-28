@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { AuthResponse } from '@/types'
 
+// Force dynamic rendering - no caching for auth endpoints
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function POST() {
   try {
     // Get the next guest number from the database
@@ -65,6 +69,9 @@ export async function POST() {
       maxAge: 60 * 60 * 24 * 30, // 30 days
       path: '/',
     })
+
+    // Ensure no caching of auth responses
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate')
 
     return response
   } catch (error) {
