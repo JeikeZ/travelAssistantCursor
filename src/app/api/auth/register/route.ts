@@ -47,13 +47,11 @@ export async function POST(request: NextRequest) {
     // Create new user with bcrypt hash
     const { data: newUser, error: insertError } = await supabaseServer
       .from('users')
-      .insert([
-        {
-          username,
-          password: hashedPassword,
-          password_hash_type: 'bcrypt',
-        },
-      ])
+      .insert({
+        username,
+        password: hashedPassword,
+        password_hash_type: 'bcrypt',
+      } as never)
       .select('id, username, created_at')
       .single()
 

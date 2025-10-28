@@ -28,7 +28,7 @@ async function verifyTripOwnership(tripId: string, userId: string): Promise<bool
     .eq('id', tripId)
     .single()
 
-  return trip?.user_id === userId
+  return (trip as { user_id: string } | null)?.user_id === userId
 }
 
 // POST /api/trips/[id]/items - Add packing item
@@ -78,7 +78,7 @@ export async function POST(
         custom: true, // User-added items are marked as custom
         quantity: body.quantity || 1,
         notes: body.notes || null,
-      })
+      } as never)
       .select()
       .single()
 
@@ -93,7 +93,7 @@ export async function POST(
     // Update trip's updated_at timestamp
     await supabaseServer
       .from('trips')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() } as never)
       .eq('id', tripId)
 
     return NextResponse.json({

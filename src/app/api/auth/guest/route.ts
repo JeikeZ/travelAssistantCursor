@@ -20,16 +20,14 @@ export async function POST() {
     const guestUsername = `guest_user${guestNumber}`
 
     // Create the guest user
+    // Type assertion needed due to Supabase client type inference issue
     const { data: newUser, error: insertError } = await supabaseServer
       .from('users')
-      .insert([
-        {
-          username: guestUsername,
-          password: null,
-          password_hash_type: null,
-          is_guest: true,
-        },
-      ])
+      .insert({
+        username: guestUsername,
+        password: null,
+        is_guest: true,
+      } as never)
       .select('id, username, created_at, is_guest')
       .single()
 

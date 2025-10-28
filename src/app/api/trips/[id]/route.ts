@@ -28,7 +28,7 @@ async function verifyTripOwnership(tripId: string, userId: string): Promise<bool
     .eq('id', tripId)
     .single()
 
-  return trip?.user_id === userId
+  return (trip as { user_id: string } | null)?.user_id === userId
 }
 
 // GET /api/trips/[id] - Get trip details
@@ -86,7 +86,7 @@ export async function GET(
     }
 
     // Calculate statistics
-    const items = packingItems || []
+    const items = (packingItems || []) as PackingItemDb[]
     const totalItems = items.length
     const packedItems = items.filter(item => item.packed).length
     const completionPercentage = totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0
@@ -158,7 +158,7 @@ export async function PUT(
     // Update trip in database
     const { data: trip, error } = await supabaseServer
       .from('trips')
-      .update(updateData)
+      .update(updateData as never)
       .eq('id', id)
       .select()
       .single()
