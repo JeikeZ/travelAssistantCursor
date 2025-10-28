@@ -121,7 +121,7 @@ Return only the JSON array, no additional text.`
         return {
           name: String(item.name),
           category: validCategories.includes(category) ? category as PackingItem['category'] : 'miscellaneous',
-          essential: Boolean(item.essential)
+          essential: item.essential === true || item.essential === 'true'
         }
       })
     } catch (parseError) {
