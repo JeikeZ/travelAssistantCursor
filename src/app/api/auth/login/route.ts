@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import { verifyPassword, hashPasswordBcrypt } from '@/lib/auth-utils-server'
 import { AuthResponse } from '@/types'
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user from database including password_hash_type and is_guest
-    const { data: user, error: queryError } = await supabase
+    const { data: user, error: queryError } = await supabaseServer
       .from('users')
       .select('id, username, password, password_hash_type, is_guest, created_at')
       .eq('username', username)
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (hashType === 'base64') {
       try {
         const newBcryptHash = await hashPasswordBcrypt(password)
-        await supabase
+        await supabaseServer
           .from('users')
           .update({
             password: newBcryptHash,

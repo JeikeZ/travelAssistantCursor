@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import type { PackingItemDb, AddPackingItemRequest } from '@/types'
 
 // Helper function to get user from session
@@ -22,7 +22,7 @@ async function getUserFromSession() {
 
 // Helper function to verify user owns the trip
 async function verifyTripOwnership(tripId: string, userId: string): Promise<boolean> {
-  const { data: trip } = await supabase
+  const { data: trip } = await supabaseServer
     .from('trips')
     .select('user_id')
     .eq('id', tripId)
@@ -67,7 +67,7 @@ export async function POST(
     }
 
     // Insert item into database
-    const { data: item, error } = await supabase
+    const { data: item, error } = await supabaseServer
       .from('packing_items')
       .insert({
         trip_id: tripId,
@@ -91,7 +91,7 @@ export async function POST(
     }
 
     // Update trip's updated_at timestamp
-    await supabase
+    await supabaseServer
       .from('trips')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', tripId)
@@ -135,7 +135,7 @@ export async function GET(
     }
 
     // Fetch packing items
-    const { data: items, error } = await supabase
+    const { data: items, error } = await supabaseServer
       .from('packing_items')
       .select('*')
       .eq('trip_id', tripId)

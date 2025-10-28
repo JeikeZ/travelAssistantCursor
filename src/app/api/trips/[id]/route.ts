@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import type { Trip, PackingItemDb, UpdateTripRequest } from '@/types'
 
 // Helper function to get user from session
@@ -22,7 +22,7 @@ async function getUserFromSession() {
 
 // Helper function to verify user owns the trip
 async function verifyTripOwnership(tripId: string, userId: string): Promise<boolean> {
-  const { data: trip } = await supabase
+  const { data: trip } = await supabaseServer
     .from('trips')
     .select('user_id')
     .eq('id', tripId)
@@ -57,7 +57,7 @@ export async function GET(
     }
 
     // Fetch trip details
-    const { data: trip, error: tripError } = await supabase
+    const { data: trip, error: tripError } = await supabaseServer
       .from('trips')
       .select('*')
       .eq('id', id)
@@ -71,7 +71,7 @@ export async function GET(
     }
 
     // Fetch packing items
-    const { data: packingItems, error: itemsError } = await supabase
+    const { data: packingItems, error: itemsError } = await supabaseServer
       .from('packing_items')
       .select('*')
       .eq('trip_id', id)
@@ -156,7 +156,7 @@ export async function PUT(
     if (body.endDate !== undefined) updateData.end_date = body.endDate
 
     // Update trip in database
-    const { data: trip, error } = await supabase
+    const { data: trip, error } = await supabaseServer
       .from('trips')
       .update(updateData)
       .eq('id', id)
@@ -210,7 +210,7 @@ export async function DELETE(
     }
 
     // Delete trip (cascade will delete packing items)
-    const { error } = await supabase
+    const { error } = await supabaseServer
       .from('trips')
       .delete()
       .eq('id', id)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import { validatePassword, validateUsername } from '@/lib/auth-utils'
 import { hashPassword } from '@/lib/auth-utils-server'
 import { AuthResponse } from '@/types'
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if username already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await supabaseServer
       .from('users')
       .select('username')
       .eq('username', username)
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password)
 
     // Create new user with bcrypt hash
-    const { data: newUser, error: insertError } = await supabase
+    const { data: newUser, error: insertError } = await supabaseServer
       .from('users')
       .insert([
         {
