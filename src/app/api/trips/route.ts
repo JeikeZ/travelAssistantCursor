@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         status: 'active',
         completion_percentage: 0,
         is_favorite: false,
-      })
+      } as never)
       .select()
       .single()
 

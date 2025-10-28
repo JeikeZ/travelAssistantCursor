@@ -29,8 +29,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Type cast due to Supabase type inference issue
+    type UserWithPassword = {
+      id: string
+      username: string
+      password: string | null
+      password_hash_type: 'base64' | 'bcrypt' | null
+      is_guest: boolean
+      created_at: string
+    }
+    const typedUser = user as unknown as UserWithPassword
+
     // Prevent guest users from logging in
-    if (user.is_guest || !user.password) {
+    if (typedUser.is_guest || !typedUser.password) {
       return NextResponse.json<AuthResponse>(
         { success: false, error: 'Guest accounts cannot login. Please create a new account or continue as a guest.' },
         { status: 400 }
@@ -39,8 +50,8 @@ export async function POST(request: NextRequest) {
 
     // Verify password with the appropriate hash type
     // Default to 'base64' for existing users who don't have the field set yet
-    const hashType = user.password_hash_type || 'base64'
-    const isPasswordValid = await verifyPassword(password, user.password, hashType)
+    const hashType = typedUser.password_hash_type || 'base64'
+    const isPasswordValid = await verifyPassword(password, typedUser.password, hashType)
     
     if (!isPasswordValid) {
       return NextResponse.json<AuthResponse>(
@@ -59,10 +70,10 @@ export async function POST(request: NextRequest) {
           .update({
             password: newBcryptHash,
             password_hash_type: 'bcrypt',
-          })
-          .eq('id', user.id)
+          } as never)
+          .eq('id', typedUser.id)
         
-        console.log(`Successfully upgraded password hash for user: ${user.username}`)
+        console.log(`Successfully upgraded password hash for user: ${typedUser.username}`)
       } catch (upgradeError) {
         // Log error but don't fail the login
         console.error('Failed to upgrade password hash:', upgradeError)
@@ -71,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // Remove password and password_hash_type from response
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, password_hash_type: __, ...userWithoutPassword } = user
+    const { password: _, password_hash_type: __, ...userWithoutPassword } = typedUser
 
     // Create session cookie
     const session = {

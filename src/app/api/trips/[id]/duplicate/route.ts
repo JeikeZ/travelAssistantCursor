@@ -28,7 +28,7 @@ async function verifyTripOwnership(tripId: string, userId: string): Promise<bool
     .eq('id', tripId)
     .single()
 
-  return trip?.user_id === userId
+  return (trip as { user_id: string } | null)?.user_id === userId
 }
 
 // POST /api/trips/[id]/duplicate - Duplicate trip
@@ -72,24 +72,27 @@ export async function POST(
       )
     }
 
+    // Type cast for originalTrip due to Supabase type inference issue
+    const typedTrip = originalTrip as unknown as Trip
+
     // Create new trip with same details
     const { data: newTrip, error: createError } = await supabaseServer
       .from('trips')
       .insert({
         user_id: user.id,
-        destination_country: originalTrip.destination_country,
-        destination_city: originalTrip.destination_city,
-        destination_state: originalTrip.destination_state,
-        destination_display_name: originalTrip.destination_display_name,
-        duration: originalTrip.duration,
-        trip_type: originalTrip.trip_type,
+        destination_country: typedTrip.destination_country,
+        destination_city: typedTrip.destination_city,
+        destination_state: typedTrip.destination_state,
+        destination_display_name: typedTrip.destination_display_name,
+        duration: typedTrip.duration,
+        trip_type: typedTrip.trip_type,
         start_date: body.newStartDate || null,
         end_date: body.newEndDate || null,
-        notes: originalTrip.notes,
+        notes: typedTrip.notes,
         status: 'active',
         completion_percentage: 0,
         is_favorite: false,
-      })
+      } as never)
       .select()
       .single()
 
@@ -100,6 +103,9 @@ export async function POST(
         { status: 500 }
       )
     }
+
+    // Type cast for newTrip due to Supabase type inference issue
+    const typedNewTrip = newTrip as unknown as Trip
 
     // Fetch original packing items
     const { data: originalItems, error: itemsError } = await supabaseServer
@@ -112,14 +118,28 @@ export async function POST(
       // Return the trip even if items fail - user can add items later
       return NextResponse.json({
         success: true,
-        newTrip: newTrip as Trip,
+        newTrip: typedNewTrip,
       })
     }
 
+    // Type cast for originalItems
+    type PackingItem = {
+      id: string
+      trip_id: string
+      name: string
+      category: string
+      essential: boolean
+      packed: boolean
+      custom: boolean
+      quantity: number
+      notes: string | null
+    }
+    const typedOriginalItems = originalItems as unknown as PackingItem[]
+
     // Copy packing items (reset packed status)
-    if (originalItems && originalItems.length > 0) {
-      const itemsToInsert = originalItems.map(item => ({
-        trip_id: newTrip.id,
+    if (typedOriginalItems && typedOriginalItems.length > 0) {
+      const itemsToInsert = typedOriginalItems.map(item => ({
+        trip_id: typedNewTrip.id,
         name: item.name,
         category: item.category,
         essential: item.essential,
@@ -131,7 +151,7 @@ export async function POST(
 
       const { error: insertItemsError } = await supabaseServer
         .from('packing_items')
-        .insert(itemsToInsert)
+        .insert(itemsToInsert as never)
 
       if (insertItemsError) {
         console.error('Error copying packing items:', insertItemsError)
@@ -141,7 +161,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      newTrip: newTrip as Trip,
+      newTrip: typedNewTrip,
     })
   } catch (error) {
     console.error('Error in POST /api/trips/[id]/duplicate:', error)

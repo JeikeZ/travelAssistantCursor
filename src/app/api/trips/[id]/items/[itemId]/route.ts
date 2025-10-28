@@ -28,7 +28,7 @@ async function verifyTripOwnership(tripId: string, userId: string): Promise<bool
     .eq('id', tripId)
     .single()
 
-  return trip?.user_id === userId
+  return (trip as { user_id: string } | null)?.user_id === userId
 }
 
 // PUT /api/trips/[id]/items/[itemId] - Update packing item
@@ -73,7 +73,7 @@ export async function PUT(
     // Update item in database
     const { data: item, error } = await supabaseServer
       .from('packing_items')
-      .update(updateData)
+      .update(updateData as never)
       .eq('id', itemId)
       .eq('trip_id', tripId)
       .select()
@@ -90,7 +90,7 @@ export async function PUT(
     // Update trip's updated_at timestamp
     await supabaseServer
       .from('trips')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() } as never)
       .eq('id', tripId)
 
     // If packed status changed, recalculate completion percentage
@@ -101,12 +101,12 @@ export async function PUT(
         .eq('trip_id', tripId)
 
       if (allItems && allItems.length > 0) {
-        const packedCount = allItems.filter(i => i.packed).length
+        const packedCount = (allItems as { packed: boolean }[]).filter(i => i.packed).length
         const completionPercentage = Math.round((packedCount / allItems.length) * 100)
         
         await supabaseServer
           .from('trips')
-          .update({ completion_percentage: completionPercentage })
+          .update({ completion_percentage: completionPercentage } as never)
           .eq('id', tripId)
       }
     }
@@ -167,7 +167,7 @@ export async function DELETE(
     // Update trip's updated_at timestamp
     await supabaseServer
       .from('trips')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() } as never)
       .eq('id', tripId)
 
     // Recalculate completion percentage
@@ -177,18 +177,18 @@ export async function DELETE(
       .eq('trip_id', tripId)
 
     if (allItems && allItems.length > 0) {
-      const packedCount = allItems.filter(i => i.packed).length
+      const packedCount = (allItems as { packed: boolean }[]).filter(i => i.packed).length
       const completionPercentage = Math.round((packedCount / allItems.length) * 100)
       
       await supabaseServer
         .from('trips')
-        .update({ completion_percentage: completionPercentage })
+        .update({ completion_percentage: completionPercentage } as never)
         .eq('id', tripId)
     } else {
       // No items left, set completion to 0
       await supabaseServer
         .from('trips')
-        .update({ completion_percentage: 0 })
+        .update({ completion_percentage: 0 } as never)
         .eq('id', tripId)
     }
 

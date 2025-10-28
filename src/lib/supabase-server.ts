@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './supabase'
 
 /**
@@ -28,7 +28,7 @@ if (!supabaseServiceRoleKey) {
 
 // Create server-side Supabase client with service role key
 // This client bypasses RLS, so application-level security is critical
-export const supabaseServer = createClient<Database>(
+export const supabaseServer: SupabaseClient<Database> = createClient<Database>(
   supabaseUrl,
   supabaseServiceRoleKey,
   {
