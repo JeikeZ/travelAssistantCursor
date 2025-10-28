@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import type { PackingItemDb, UpdatePackingItemRequest } from '@/types'
 
 // Helper function to get user from session
@@ -22,7 +22,7 @@ async function getUserFromSession() {
 
 // Helper function to verify user owns the trip
 async function verifyTripOwnership(tripId: string, userId: string): Promise<boolean> {
-  const { data: trip } = await supabase
+  const { data: trip } = await supabaseServer
     .from('trips')
     .select('user_id')
     .eq('id', tripId)
@@ -71,7 +71,7 @@ export async function PUT(
     if (body.essential !== undefined) updateData.essential = body.essential
 
     // Update item in database
-    const { data: item, error } = await supabase
+    const { data: item, error } = await supabaseServer
       .from('packing_items')
       .update(updateData)
       .eq('id', itemId)
@@ -88,14 +88,14 @@ export async function PUT(
     }
 
     // Update trip's updated_at timestamp
-    await supabase
+    await supabaseServer
       .from('trips')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', tripId)
 
     // If packed status changed, recalculate completion percentage
     if (body.packed !== undefined) {
-      const { data: allItems } = await supabase
+      const { data: allItems } = await supabaseServer
         .from('packing_items')
         .select('packed')
         .eq('trip_id', tripId)
@@ -104,7 +104,7 @@ export async function PUT(
         const packedCount = allItems.filter(i => i.packed).length
         const completionPercentage = Math.round((packedCount / allItems.length) * 100)
         
-        await supabase
+        await supabaseServer
           .from('trips')
           .update({ completion_percentage: completionPercentage })
           .eq('id', tripId)
@@ -150,7 +150,7 @@ export async function DELETE(
     }
 
     // Delete item
-    const { error } = await supabase
+    const { error } = await supabaseServer
       .from('packing_items')
       .delete()
       .eq('id', itemId)
@@ -165,13 +165,13 @@ export async function DELETE(
     }
 
     // Update trip's updated_at timestamp
-    await supabase
+    await supabaseServer
       .from('trips')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', tripId)
 
     // Recalculate completion percentage
-    const { data: allItems } = await supabase
+    const { data: allItems } = await supabaseServer
       .from('packing_items')
       .select('packed')
       .eq('trip_id', tripId)
@@ -180,13 +180,13 @@ export async function DELETE(
       const packedCount = allItems.filter(i => i.packed).length
       const completionPercentage = Math.round((packedCount / allItems.length) * 100)
       
-      await supabase
+      await supabaseServer
         .from('trips')
         .update({ completion_percentage: completionPercentage })
         .eq('id', tripId)
     } else {
       // No items left, set completion to 0
-      await supabase
+      await supabaseServer
         .from('trips')
         .update({ completion_percentage: 0 })
         .eq('id', tripId)

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import { AuthResponse } from '@/types'
 
 export async function POST() {
   try {
     // Get the next guest number from the database
-    const { data: counterData, error: counterError } = await supabase
+    const { data: counterData, error: counterError } = await supabaseServer
       .rpc('get_next_guest_number')
 
     if (counterError) {
@@ -20,7 +20,7 @@ export async function POST() {
     const guestUsername = `guest_user${guestNumber}`
 
     // Create the guest user
-    const { data: newUser, error: insertError } = await supabase
+    const { data: newUser, error: insertError } = await supabaseServer
       .from('users')
       .insert([
         {

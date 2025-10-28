@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import type { TripStatistics, Trip } from '@/types'
 
 // Helper function to get user from session
@@ -40,7 +40,7 @@ export async function GET() {
     }
 
     // Fetch all trips for the user
-    const { data: trips, error } = await supabase
+    const { data: trips, error } = await supabaseServer
       .from('trips')
       .select('*')
       .eq('user_id', user.id)

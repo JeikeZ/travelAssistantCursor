@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import type { Trip, DuplicateTripRequest } from '@/types'
 
 // Helper function to get user from session
@@ -22,7 +22,7 @@ async function getUserFromSession() {
 
 // Helper function to verify user owns the trip
 async function verifyTripOwnership(tripId: string, userId: string): Promise<boolean> {
-  const { data: trip } = await supabase
+  const { data: trip } = await supabaseServer
     .from('trips')
     .select('user_id')
     .eq('id', tripId)
@@ -59,7 +59,7 @@ export async function POST(
     const body: DuplicateTripRequest = await request.json()
 
     // Fetch original trip
-    const { data: originalTrip, error: tripError } = await supabase
+    const { data: originalTrip, error: tripError } = await supabaseServer
       .from('trips')
       .select('*')
       .eq('id', id)
@@ -73,7 +73,7 @@ export async function POST(
     }
 
     // Create new trip with same details
-    const { data: newTrip, error: createError } = await supabase
+    const { data: newTrip, error: createError } = await supabaseServer
       .from('trips')
       .insert({
         user_id: user.id,
@@ -102,7 +102,7 @@ export async function POST(
     }
 
     // Fetch original packing items
-    const { data: originalItems, error: itemsError } = await supabase
+    const { data: originalItems, error: itemsError } = await supabaseServer
       .from('packing_items')
       .select('*')
       .eq('trip_id', id)
@@ -129,7 +129,7 @@ export async function POST(
         notes: item.notes,
       }))
 
-      const { error: insertItemsError } = await supabase
+      const { error: insertItemsError } = await supabaseServer
         .from('packing_items')
         .insert(itemsToInsert)
 
