@@ -39,7 +39,35 @@ export default function CompletionPage() {
     if (storedTripData) {
       setTripData(JSON.parse(storedTripData))
     }
+
+    // Mark trip as completed in database if it exists
+    const tripId = localStorage.getItem('currentTripId')
+    const userStr = localStorage.getItem('user')
+    const user = userStr ? JSON.parse(userStr) : null
+    
+    if (tripId && user && !user.is_guest) {
+      markTripAsCompleted(tripId)
+    }
   }, [])
+
+  const markTripAsCompleted = async (tripId: string) => {
+    try {
+      await fetch(`/api/trips/${tripId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'completed',
+          completionPercentage: 100,
+        }),
+      })
+      console.log('Trip marked as completed in database')
+    } catch (error) {
+      console.error('Error marking trip as completed:', error)
+      // Don't show error to user - this is a background operation
+    }
+  }
 
   const handleStartNewTrip = () => {
     // Clear stored data
