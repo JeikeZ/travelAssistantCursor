@@ -66,36 +66,72 @@ export default function PackingListPage() {
     }
   }, [])
 
-  // Save packing list items to database
-  const savePackingListToDatabase = useCallback(async (items: PackingItem[], tripId: string) => {
+  // Save packing list items to database and return ID mapping
+  const savePackingListToDatabase = useCallback(async (items: PackingItem[], tripId: string): Promise<Map<string, string>> => {
+    const idMapping = new Map<string, string>()
+    const failedItems: string[] = []
+    
     try {
       setIsSyncingToDb(true)
       
-      // Bulk insert all items
-      const insertPromises = items.map(item => 
-        fetch(`/api/trips/${tripId}/items`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: item.name,
-            category: item.category,
-            essential: item.essential,
-            quantity: 1,
-          }),
-        })
-      )
+      // Sequential insert to capture database-generated IDs
+      for (const item of items) {
+        try {
+          const response = await fetch(`/api/trips/${tripId}/items`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: item.name,
+              category: item.category,
+              essential: item.essential,
+              quantity: 1,
+            }),
+          })
 
-      await Promise.all(insertPromises)
-      console.log('Successfully saved packing list to database')
+          if (response.ok) {
+            const data = await response.json()
+            if (data.success && data.item) {
+              // Map old client-side ID to new database UUID
+              idMapping.set(item.id, data.item.id)
+            } else {
+              failedItems.push(item.name)
+            }
+          } else {
+            failedItems.push(item.name)
+          }
+        } catch (itemError) {
+          console.error(`Error saving item "${item.name}":`, itemError)
+          failedItems.push(item.name)
+        }
+      }
+      
+      console.log(`Successfully saved ${idMapping.size} items to database`)
+      
+      if (failedItems.length > 0) {
+        console.warn(`Failed to save ${failedItems.length} items:`, failedItems)
+        addToast({
+          type: 'warning',
+          title: 'Partial Save',
+          description: `${failedItems.length} item(s) could not be saved to database. They will remain in localStorage only.`,
+          duration: 5000
+        })
+      }
     } catch (error) {
       console.error('Error saving packing list to database:', error)
-      // Don't show error to user - items are still in localStorage
+      addToast({
+        type: 'error',
+        title: 'Database Sync Failed',
+        description: 'Could not save items to database. Your items are saved locally.',
+        duration: 5000
+      })
     } finally {
       setIsSyncingToDb(false)
     }
-  }, [])
+    
+    return idMapping
+  }, [addToast])
 
   // Load packing list from database if trip exists
   const loadPackingListFromDatabase = useCallback(async (tripId: string) => {
@@ -155,12 +191,30 @@ export default function PackingListPage() {
         throw new Error('Invalid packing list data received')
       }
       
-      updatePackingList(data.packingList)
+      let finalList = data.packingList
       
-      // Save to database if we have a trip ID
+      // Save to database if we have a trip ID and replace with database IDs
       if (currentTripId) {
-        await savePackingListToDatabase(data.packingList, currentTripId)
+        const idMapping = await savePackingListToDatabase(data.packingList, currentTripId)
+        
+        // Update items with database-generated IDs
+        if (idMapping.size > 0) {
+          finalList = data.packingList.map((item: PackingItem) => ({
+            ...item,
+            id: idMapping.get(item.id) || item.id // Use database ID if available, fallback to client ID
+          }))
+          
+          addToast({
+            type: 'success',
+            title: 'List Synced',
+            description: `Your packing list has been saved to your account.`,
+            duration: 3000
+          })
+        }
       }
+      
+      // Update localStorage with final list (with database IDs if available)
+      updatePackingList(finalList)
     } catch (error) {
       console.error('Error generating packing list:', error)
       
@@ -173,12 +227,22 @@ export default function PackingListPage() {
         { id: 'fallback-5', name: 'Toothbrush', category: 'toiletries', essential: false, packed: false, custom: false },
       ]
       
-      updatePackingList(basicList)
+      let finalBasicList = basicList
       
       // Save basic list to database if we have a trip ID
       if (currentTripId) {
-        await savePackingListToDatabase(basicList, currentTripId)
+        const idMapping = await savePackingListToDatabase(basicList, currentTripId)
+        
+        // Update basic items with database-generated IDs
+        if (idMapping.size > 0) {
+          finalBasicList = basicList.map((item: PackingItem) => ({
+            ...item,
+            id: idMapping.get(item.id) || item.id
+          }))
+        }
       }
+      
+      updatePackingList(finalBasicList)
       
       // Check if it's an API key issue
       const isApiKeyIssue = error instanceof Error && error.message.includes('API key')
@@ -228,32 +292,53 @@ export default function PackingListPage() {
 
   // Wrapper functions to sync with database
   const toggleItemPacked = useCallback(async (itemId: string) => {
+    const item = packingList.find(i => i.id === itemId)
+    if (!item) return
+    
+    // Optimistically update UI
     toggleItemPackedLocal(itemId)
     
     if (currentTripId && !isSyncingToDb) {
       try {
-        const item = packingList.find(i => i.id === itemId)
-        if (item) {
-          await fetch(`/api/trips/${currentTripId}/items/${itemId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ packed: !item.packed }),
+        const response = await fetch(`/api/trips/${currentTripId}/items/${itemId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ packed: !item.packed }),
+        })
+        
+        if (!response.ok) {
+          // Rollback on failure
+          toggleItemPackedLocal(itemId)
+          addToast({
+            type: 'error',
+            title: 'Sync Failed',
+            description: 'Could not update item in database. Changes saved locally only.',
+            duration: 3000
           })
         }
       } catch (error) {
         console.error('Error syncing packed status to database:', error)
+        // Rollback on error
+        toggleItemPackedLocal(itemId)
+        addToast({
+          type: 'error',
+          title: 'Sync Failed',
+          description: 'Could not update item in database. Changes saved locally only.',
+          duration: 3000
+        })
       }
     }
-  }, [toggleItemPackedLocal, currentTripId, packingList, isSyncingToDb])
+  }, [toggleItemPackedLocal, currentTripId, packingList, isSyncingToDb, addToast])
 
   const addCustomItem = useCallback(async (item: Omit<PackingItem, 'id' | 'packed' | 'custom'>) => {
+    // First add locally (generates client-side ID)
     addCustomItemLocal(item)
     
     if (currentTripId && !isSyncingToDb) {
       try {
-        await fetch(`/api/trips/${currentTripId}/items`, {
+        const response = await fetch(`/api/trips/${currentTripId}/items`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -264,43 +349,133 @@ export default function PackingListPage() {
             essential: item.essential,
           }),
         })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.item) {
+            // Replace the locally-generated ID with database ID
+            const updatedList = packingList.map((listItem) => {
+              // Find the item we just added (it will have the most recent timestamp in its ID)
+              if (listItem.name === item.name && listItem.id.startsWith('custom-')) {
+                return { ...listItem, id: data.item.id }
+              }
+              return listItem
+            })
+            // Append the new item if not found in map (race condition safety)
+            const existingItem = updatedList.find(i => i.id === data.item.id)
+            if (!existingItem) {
+              updatedList.push({
+                id: data.item.id,
+                name: data.item.name,
+                category: data.item.category,
+                essential: data.item.essential,
+                packed: data.item.packed,
+                custom: data.item.custom,
+              })
+            }
+            updatePackingList(updatedList)
+          }
+        }
       } catch (error) {
         console.error('Error syncing new item to database:', error)
+        addToast({
+          type: 'warning',
+          title: 'Item Added Locally',
+          description: 'Item saved locally but could not sync to database.',
+          duration: 3000
+        })
       }
     }
-  }, [addCustomItemLocal, currentTripId, isSyncingToDb])
+  }, [addCustomItemLocal, currentTripId, isSyncingToDb, packingList, updatePackingList, addToast])
 
   const deleteItem = useCallback(async (itemId: string) => {
+    // Store item for potential rollback
+    const itemToDelete = packingList.find(i => i.id === itemId)
+    
+    // Optimistically delete from UI
     deleteItemLocal(itemId)
     
     if (currentTripId && !isSyncingToDb) {
       try {
-        await fetch(`/api/trips/${currentTripId}/items/${itemId}`, {
+        const response = await fetch(`/api/trips/${currentTripId}/items/${itemId}`, {
           method: 'DELETE',
         })
+        
+        if (!response.ok) {
+          // Rollback on failure
+          if (itemToDelete) {
+            const restoredList = [...packingList, itemToDelete]
+            updatePackingList(restoredList)
+          }
+          addToast({
+            type: 'error',
+            title: 'Delete Failed',
+            description: 'Could not delete item from database.',
+            duration: 3000
+          })
+        }
       } catch (error) {
         console.error('Error syncing item deletion to database:', error)
+        // Rollback on error
+        if (itemToDelete) {
+          const restoredList = [...packingList, itemToDelete]
+          updatePackingList(restoredList)
+        }
+        addToast({
+          type: 'error',
+          title: 'Delete Failed',
+          description: 'Could not delete item from database.',
+          duration: 3000
+        })
       }
     }
-  }, [deleteItemLocal, currentTripId, isSyncingToDb])
+  }, [deleteItemLocal, currentTripId, isSyncingToDb, packingList, updatePackingList, addToast])
 
   const editItem = useCallback(async (itemId: string, newName: string) => {
+    // Store old name for potential rollback
+    const oldItem = packingList.find(i => i.id === itemId)
+    const oldName = oldItem?.name
+    
+    // Optimistically update UI
     editItemLocal(itemId, newName)
     
     if (currentTripId && !isSyncingToDb) {
       try {
-        await fetch(`/api/trips/${currentTripId}/items/${itemId}`, {
+        const response = await fetch(`/api/trips/${currentTripId}/items/${itemId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ name: newName }),
         })
+        
+        if (!response.ok) {
+          // Rollback on failure
+          if (oldName) {
+            editItemLocal(itemId, oldName)
+          }
+          addToast({
+            type: 'error',
+            title: 'Update Failed',
+            description: 'Could not update item in database.',
+            duration: 3000
+          })
+        }
       } catch (error) {
         console.error('Error syncing item edit to database:', error)
+        // Rollback on error
+        if (oldName) {
+          editItemLocal(itemId, oldName)
+        }
+        addToast({
+          type: 'error',
+          title: 'Update Failed',
+          description: 'Could not update item in database.',
+          duration: 3000
+        })
       }
     }
-  }, [editItemLocal, currentTripId, isSyncingToDb])
+  }, [editItemLocal, currentTripId, isSyncingToDb, packingList, addToast])
 
   const handleEditItem = useCallback((itemId: string, newName: string) => {
     editItem(itemId, newName)
@@ -320,7 +495,9 @@ export default function PackingListPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-700">Generating your personalized packing list...</p>
+          <p className="text-slate-700">
+            {isSyncingToDb ? 'Syncing with database...' : 'Generating your personalized packing list...'}
+          </p>
         </div>
       </div>
     )
