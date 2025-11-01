@@ -79,7 +79,7 @@ export async function POST(
         category: body.category,
         essential: body.essential || false,
         packed: false,
-        custom: true, // User-added items are marked as custom
+        custom: body.custom !== undefined ? body.custom : true, // Use provided value, default to true for user-added items
         quantity: body.quantity || 1,
         notes: body.notes || null,
       } as never)

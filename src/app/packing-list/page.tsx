@@ -90,6 +90,7 @@ export default function PackingListPage() {
               name: item.name,
               category: item.category,
               essential: item.essential,
+              custom: item.custom, // Preserve custom field from AI-generated items
               quantity: 1,
             }),
           })
@@ -351,6 +352,7 @@ export default function PackingListPage() {
             name: item.name,
             category: item.category,
             essential: item.essential,
+            custom: true, // User-added items are marked as custom
           }),
         })
         
