@@ -10,6 +10,7 @@ import { TripStatistics } from '@/components/trips/TripStatistics'
 import { Button } from '@/components/ui/Button'
 import { Loading } from '@/components/ui/Loading'
 import { useToast } from '@/components/ui/Toast'
+import { STORAGE_KEYS } from '@/lib/constants'
 import type { TripFilters as TripFiltersType, SortOptions, User } from '@/types'
 
 export default function TripsPage() {
@@ -87,7 +88,26 @@ export default function TripsPage() {
   }
 
   const handleViewTrip = (tripId: string) => {
-    router.push(`/trips/${tripId}`)
+    // Find the trip data
+    const trip = trips.find(t => t.id === tripId)
+    if (!trip) return
+
+    // Set up localStorage for the packing list page
+    const tripData = {
+      destinationCountry: trip.destination_country,
+      destinationCity: trip.destination_city,
+      destinationState: trip.destination_state || undefined,
+      destinationDisplayName: trip.destination_display_name || undefined,
+      duration: trip.duration,
+      tripType: trip.trip_type,
+    }
+
+    // Store trip data and ID in localStorage
+    localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
+    localStorage.setItem('currentTripId', tripId)
+
+    // Navigate to packing list page
+    router.push('/packing-list')
   }
 
   const handleDuplicateTrip = async (tripId: string) => {
