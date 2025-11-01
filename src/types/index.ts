@@ -411,6 +411,7 @@ export interface AddPackingItemRequest {
   name: string
   category: PackingCategory
   essential: boolean
+  custom?: boolean // Optional: defaults to true for user-added items, false for AI-generated items
   quantity?: number
   notes?: string
 }
