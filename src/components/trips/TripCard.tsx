@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
 import { Trip } from '@/types'
 import { Card } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
@@ -25,6 +24,12 @@ export function TripCard({
 }: TripCardProps) {
   const handleView = (e: React.MouseEvent) => {
     e.preventDefault()
+    if (onView) {
+      onView(trip.id)
+    }
+  }
+
+  const handleCardClick = () => {
     if (onView) {
       onView(trip.id)
     }
@@ -77,9 +82,11 @@ export function TripCard({
   }
 
   return (
-    <Link href={`/trips/${trip.id}`}>
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-        <div className="p-5">
+    <Card 
+      className="hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={handleCardClick}
+    >
+      <div className="p-5">
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
@@ -197,7 +204,6 @@ export function TripCard({
             </Button>
           </div>
         </div>
-      </Card>
-    </Link>
+    </Card>
   )
 }

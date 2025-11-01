@@ -53,12 +53,16 @@ export default function PackingListPage() {
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [currentTripId, setCurrentTripId] = useState<string | null>(null)
   const [isSyncingToDb, setIsSyncingToDb] = useState(false)
+  const [hasUser, setHasUser] = useState(false)
 
   // Get trip ID and user info on mount
   useEffect(() => {
     const tripId = localStorage.getItem('currentTripId')
     const userStr = localStorage.getItem('user')
     const user = userStr ? JSON.parse(userStr) : null
+    
+    // Track if user exists for back navigation
+    setHasUser(!!user && !user.is_guest)
     
     // Only set trip ID if user is authenticated and not a guest
     if (tripId && user && !user.is_guest) {
@@ -511,7 +515,7 @@ export default function PackingListPage() {
         backButton={
           <Button
             variant="ghost"
-            onClick={() => router.push('/')}
+            onClick={() => router.push(hasUser ? '/trips' : '/')}
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="w-4 h-4" />
