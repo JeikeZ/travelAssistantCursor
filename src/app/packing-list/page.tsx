@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { PackingItem } from '@/types'
+import { PackingItem, PackingItemDb } from '@/types'
 import { usePackingList } from '@/hooks/usePackingList'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useToast } from '@/components/ui/Toast'
@@ -109,7 +109,7 @@ export default function PackingListPage() {
       const data = await response.json()
       if (data.packingItems && data.packingItems.length > 0) {
         // Convert database items to PackingItem format
-        const items: PackingItem[] = data.packingItems.map((dbItem: any) => ({
+        const items: PackingItem[] = data.packingItems.map((dbItem: PackingItemDb) => ({
           id: dbItem.id,
           name: dbItem.name,
           category: dbItem.category,
@@ -330,7 +330,7 @@ export default function PackingListPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <PageHeader
         title="Packing List"
-        subtitle={tripData ? `${tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`} • ${tripData.duration} days • ${tripData.tripType}` : undefined}
+        subtitle={tripData ? `${tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`} ? ${tripData.duration} days ? ${tripData.tripType}` : undefined}
         backButton={
           <Button
             variant="ghost"
@@ -385,7 +385,7 @@ export default function PackingListPage() {
                   <span>{progress.packedItems} of {progress.totalItems} items packed</span>
                   <span>
                     {progress.progress === 100 ? (
-                      <span className="text-green-600 font-medium">Ready to go! 🎉</span>
+                      <span className="text-green-600 font-medium">Ready to go! ??</span>
                     ) : (
                       `${Math.round(progress.progress)}% complete`
                     )}
