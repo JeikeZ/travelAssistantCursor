@@ -59,37 +59,37 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Cloud className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+              <Cloud className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Weather Forecast</h3>
             </div>
-            {/* Temperature Unit Toggle */}
-            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={toggleToCelsius}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
-                  temperatureUnit === 'C'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                °C
-              </button>
-              <button
-                onClick={toggleToFahrenheit}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
-                  temperatureUnit === 'F'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                °F
-              </button>
-            </div>
+          {/* Temperature Unit Toggle */}
+          <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={toggleToCelsius}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                temperatureUnit === 'C'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              °C
+            </button>
+            <button
+              onClick={toggleToFahrenheit}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                temperatureUnit === 'F'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              °F
+            </button>
+          </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <Loader2 className="w-6 h-6 animate-spin text-gray-600 dark:text-gray-400" />
             <span className="ml-2 text-gray-700 dark:text-gray-300">Loading weather...</span>
           </div>
         </CardContent>
@@ -103,32 +103,32 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Cloud className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+              <Cloud className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Weather Forecast</h3>
             </div>
-            {/* Temperature Unit Toggle */}
-            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={toggleToCelsius}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
-                  temperatureUnit === 'C'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                °C
-              </button>
-              <button
-                onClick={toggleToFahrenheit}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
-                  temperatureUnit === 'F'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                °F
-              </button>
-            </div>
+          {/* Temperature Unit Toggle */}
+          <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={toggleToCelsius}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                temperatureUnit === 'C'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              °C
+            </button>
+            <button
+              onClick={toggleToFahrenheit}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                temperatureUnit === 'F'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              °F
+            </button>
+          </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -148,17 +148,17 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Cloud className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+            <Cloud className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Weather Forecast</h3>
           </div>
           {/* Temperature Unit Toggle */}
-          <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => setTemperatureUnit('C')}
               className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
                 temperatureUnit === 'C'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               °C
@@ -167,8 +167,8 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
               onClick={() => setTemperatureUnit('F')}
               className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
                 temperatureUnit === 'F'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               °F
@@ -198,28 +198,28 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
                 key={day.date}
                 className={`flex items-center justify-between p-4 rounded-lg transition-all ${
                   isToday
-                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 shadow-sm'
-                    : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                    ? 'bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 shadow-sm'
+                    : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                 }`}
               >
                 <div className="flex items-center space-x-4">
                   <span className={`${isToday ? 'text-3xl' : 'text-2xl'}`}>{day.icon}</span>
                   <div>
-                    <div className={`font-medium ${isToday ? 'text-blue-900 dark:text-blue-300 text-lg' : 'text-gray-900 dark:text-gray-100'}`}>
+                    <div className={`font-medium ${isToday ? 'text-gray-900 dark:text-white text-lg' : 'text-gray-900 dark:text-gray-100'}`}>
                       {formatDate(day.date)}
                     </div>
-                    <div className={`text-sm ${isToday ? 'text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                    <div className={`text-sm ${isToday ? 'text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300'}`}>
                       {day.description}
                     </div>
                   </div>
                 </div>
                 
                 <div className="text-right">
-                  <div className={`font-semibold ${isToday ? 'text-blue-900 dark:text-blue-300 text-lg' : 'text-gray-900 dark:text-gray-100'}`}>
+                  <div className={`font-semibold ${isToday ? 'text-gray-900 dark:text-white text-lg' : 'text-gray-900 dark:text-gray-100'}`}>
                     {convertTemperature(day.maxTemp, 'C', temperatureUnit)}° / {convertTemperature(day.minTemp, 'C', temperatureUnit)}°
                   </div>
                   {day.precipitationProbability > 0 && (
-                    <div className={`text-sm flex items-center ${isToday ? 'text-blue-700 dark:text-blue-400' : 'text-blue-600'}`}>
+                    <div className={`text-sm flex items-center ${isToday ? 'text-gray-600 dark:text-gray-400' : 'text-gray-600 dark:text-gray-400'}`}>
                       <CloudRain className="w-3 h-3 mr-1" />
                       {day.precipitationProbability}%
                     </div>
