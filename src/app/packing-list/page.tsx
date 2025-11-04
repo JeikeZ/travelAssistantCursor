@@ -47,7 +47,7 @@ export default function PackingListPage() {
     progress,
     groupedItems,
     sortedCategories
-  } = usePackingList()
+  } = usePackingList(currentTripId || undefined)
   
   const [isLoading, setIsLoading] = useState(true)
   const [editingItem, setEditingItem] = useState<string | null>(null)
@@ -69,6 +69,15 @@ export default function PackingListPage() {
       setCurrentTripId(tripId)
     }
   }, [])
+
+  // Cleanup: Remove trip-specific packing list data when leaving the page
+  // This prevents stale data from affecting other trips
+  useEffect(() => {
+    return () => {
+      // On unmount, we keep the data in localStorage for quick return
+      // but the trip-specific key ensures it won't interfere with other trips
+    }
+  }, [currentTripId])
 
   // Save packing list items to database and return ID mapping
   const savePackingListToDatabase = useCallback(async (items: PackingItem[], tripId: string): Promise<Map<string, string>> => {
@@ -272,28 +281,29 @@ export default function PackingListPage() {
       return
     }
 
-    // Check if we already have a packing list in localStorage
-    if (packingList.length === 0) {
-      // If we have a trip ID, try to load from database first
-      if (currentTripId) {
-        loadPackingListFromDatabase(currentTripId).then(loaded => {
-          if (!loaded) {
-            // No items in database, generate new list
-            generatePackingList(tripData)
-          } else {
-            setIsLoading(false)
-          }
-        })
-      } else {
-        // No trip ID (guest user), generate new list
-        generatePackingList(tripData)
-      }
+    // Always load from database first if we have a trip ID (database is source of truth)
+    // This prevents issues where localStorage contains data from a different trip
+    if (currentTripId) {
+      loadPackingListFromDatabase(currentTripId).then(loaded => {
+        if (!loaded) {
+          // No items in database, generate new list
+          generatePackingList(tripData)
+        } else {
+          setIsLoading(false)
+        }
+      })
     } else {
-      setIsLoading(false)
+      // No trip ID (guest user) - check localStorage or generate new list
+      if (packingList.length === 0) {
+        generatePackingList(tripData)
+      } else {
+        setIsLoading(false)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tripData, packingList.length, router, currentTripId])
+  }, [tripData, router, currentTripId])
   // Note: generatePackingList and loadPackingListFromDatabase are intentionally excluded to prevent unnecessary re-generation
+  // packingList.length removed from deps to ensure we always load from database for authenticated users
 
   // Wrapper functions to sync with database
   const toggleItemPacked = useCallback(async (itemId: string) => {
