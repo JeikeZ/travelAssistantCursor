@@ -304,6 +304,7 @@ export interface PackingItemDb {
   created_at: string
   updated_at: string
   notes: string | null
+  deleted_at: string | null  // Timestamp of soft deletion, NULL means item is active
 }
 
 export interface PackingItemInsert {

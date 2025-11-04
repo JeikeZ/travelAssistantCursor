@@ -72,24 +72,23 @@ export const PackingItemComponent = memo(function PackingItemComponent({
       
       <div className="flex space-x-1">
         {item.custom && (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onStartEdit(item.id)}
-            >
-              <Edit3 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(item.id)}
-              className="text-red-600 hover:text-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onStartEdit(item.id)}
+          >
+            <Edit3 className="w-4 h-4" />
+          </Button>
         )}
+        {/* Delete available for ALL items */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onDelete(item.id)}
+          className="text-red-600 hover:text-red-700"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   )

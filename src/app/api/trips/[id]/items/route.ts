@@ -144,11 +144,12 @@ export async function GET(
       )
     }
 
-    // Fetch packing items
+    // Fetch packing items (exclude soft-deleted items)
     const { data: items, error } = await supabaseServer
       .from('packing_items')
       .select('*')
       .eq('trip_id', tripId)
+      .is('deleted_at', null)  // Only fetch non-deleted items
       .order('category', { ascending: true })
       .order('name', { ascending: true })
 
