@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, use } from 'react'
+import React, { useState, use, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTripDetail } from '@/hooks/useTripDetail'
 import { PackingItemComponent } from '@/components/packing/PackingItemComponent'
@@ -11,6 +11,11 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Loading } from '@/components/ui/Loading'
 import { useToast } from '@/components/ui/Toast'
 import type { PackingCategory, PackingItem } from '@/types'
+
+// Lazy load WeatherForecast component
+const WeatherForecast = lazy(() =>
+  import('@/components/ui/WeatherForecast').then(module => ({ default: module.WeatherForecast }))
+)
 
 export default function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
@@ -171,183 +176,206 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <Button variant="ghost" onClick={() => router.push('/trips')} className="mb-4">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Trips
-          </Button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
+        <Button variant="ghost" onClick={() => router.push('/trips')} className="mb-6">
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Trips
+        </Button>
 
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {trip.destination_display_name || `${trip.destination_city}, ${trip.destination_country}`}
-                  </h1>
-                  <button
-                    onClick={handleToggleFavorite}
-                    className={`text-2xl ${trip.is_favorite ? 'text-yellow-500' : 'text-gray-300'} hover:text-yellow-500`}
-                  >
-                    {trip.is_favorite ? '★' : '☆'}
-                  </button>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {trip.trip_type} trip
-                </p>
-                {trip.start_date && (
-                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                    {new Date(trip.start_date).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                    {trip.end_date && (
-                      <> → {new Date(trip.end_date).toLocaleDateString('en-US', {
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Weather Sidebar - Left */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8">
+              <Suspense fallback={
+                <Card className="p-6">
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-gray-600 dark:text-gray-400">Loading weather...</span>
+                  </div>
+                </Card>
+              }>
+                <WeatherForecast
+                  city={trip.destination_city}
+                  country={trip.destination_country}
+                />
+              </Suspense>
+            </div>
+          </div>
+
+          {/* Trip Content - Right */}
+          <div className="lg:col-span-2">
+            {/* Header */}
+
+            <Card className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                      {trip.destination_display_name || `${trip.destination_city}, ${trip.destination_country}`}
+                    </h1>
+                    <button
+                      onClick={handleToggleFavorite}
+                      className={`text-2xl ${trip.is_favorite ? 'text-yellow-500' : 'text-gray-300'} hover:text-yellow-500`}
+                    >
+                      {trip.is_favorite ? '★' : '☆'}
+                    </button>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {trip.trip_type} trip
+                  </p>
+                  {trip.start_date && (
+                    <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                      {new Date(trip.start_date).toLocaleDateString('en-US', {
                         month: 'long',
                         day: 'numeric',
                         year: 'numeric',
-                      })}</>
-                    )}
+                      })}
+                      {trip.end_date && (
+                        <> → {new Date(trip.end_date).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}</>
+                      )}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {trip.status === 'active' && (
+                    <Button variant="outline" size="sm" onClick={handleMarkComplete}>
+                      Mark Complete
+                    </Button>
+                  )}
+                  {trip.status !== 'archived' && (
+                    <Button variant="outline" size="sm" onClick={handleArchiveTrip}>
+                      Archive
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Progress */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Packing Progress
+                  </span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {statistics.packedItems} / {statistics.totalItems} items packed
+                  </span>
+                </div>
+                <ProgressBar value={statistics.completionPercentage} showPercentage={false} />
+              </div>
+
+              {/* Notes */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Trip Notes
+                  </label>
+                  {!isEditingNotes && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setNotes(trip.notes || '')
+                        setIsEditingNotes(true)
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                </div>
+                {isEditingNotes ? (
+                  <div>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      rows={3}
+                      placeholder="Add notes about your trip..."
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <Button size="sm" onClick={handleSaveNotes}>
+                        Save
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setIsEditingNotes(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    {trip.notes || 'No notes yet'}
                   </p>
                 )}
               </div>
-              <div className="flex gap-2">
-                {trip.status === 'active' && (
-                  <Button variant="outline" size="sm" onClick={handleMarkComplete}>
-                    Mark Complete
-                  </Button>
-                )}
-                {trip.status !== 'archived' && (
-                  <Button variant="outline" size="sm" onClick={handleArchiveTrip}>
-                    Archive
-                  </Button>
-                )}
-              </div>
-            </div>
+            </Card>
 
-            {/* Progress */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Packing Progress
-                </span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {statistics.packedItems} / {statistics.totalItems} items packed
-                </span>
+            {/* Packing List */}
+            <div className="mb-6 mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Packing List</h2>
+                <Button onClick={() => setShowAddItem(!showAddItem)}>
+                  {showAddItem ? 'Cancel' : 'Add Item'}
+                </Button>
               </div>
-              <ProgressBar value={statistics.completionPercentage} showPercentage={false} />
-            </div>
 
-            {/* Notes */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Trip Notes
-                </label>
-                {!isEditingNotes && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setNotes(trip.notes || '')
-                      setIsEditingNotes(true)
-                    }}
-                  >
-                    Edit
-                  </Button>
-                )}
-              </div>
-              {isEditingNotes ? (
-                <div>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    rows={3}
-                    placeholder="Add notes about your trip..."
-                  />
-                  <div className="flex gap-2 mt-2">
-                    <Button size="sm" onClick={handleSaveNotes}>
-                      Save
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setIsEditingNotes(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
+              {showAddItem && (
+                <Card className="p-4 mb-4">
+                  <AddItemForm onAddItem={handleAddItem} />
+                </Card>
+              )}
+
+              {packingItems.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    No packing items yet. Add your first item to get started!
+                  </p>
+                </Card>
               ) : (
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  {trip.notes || 'No notes yet'}
-                </p>
+                <div className="space-y-6">
+                  {categories.map(category => {
+                    const items = groupedItems[category] || []
+                    if (items.length === 0) return null
+
+                    return (
+                      <Card key={category} className="p-5">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 capitalize">
+                          {category.replace('_', ' ')}
+                        </h3>
+                        <div className="space-y-2">
+                          {items.map(item => (
+                            <PackingItemComponent
+                              key={item.id}
+                              item={{
+                                id: item.id,
+                                name: item.name,
+                                category: item.category,
+                                essential: item.essential,
+                                packed: item.packed,
+                                custom: item.custom,
+                              }}
+                              editingItem={editingItem}
+                              onTogglePacked={() => handleTogglePacked(item.id)}
+                              onDelete={() => handleDeleteItem(item.id)}
+                              onEdit={(itemId, newName) => handleEditItem(itemId, newName)}
+                              onStartEdit={(itemId) => setEditingItem(itemId)}
+                              onCancelEdit={() => setEditingItem(null)}
+                            />
+                          ))}
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
               )}
             </div>
-          </Card>
-        </div>
-
-        {/* Packing List */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Packing List</h2>
-            <Button onClick={() => setShowAddItem(!showAddItem)}>
-              {showAddItem ? 'Cancel' : 'Add Item'}
-            </Button>
           </div>
-
-          {showAddItem && (
-            <Card className="p-4 mb-4">
-              <AddItemForm onAddItem={handleAddItem} />
-            </Card>
-          )}
-
-          {packingItems.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-gray-600 dark:text-gray-400">
-                No packing items yet. Add your first item to get started!
-              </p>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {categories.map(category => {
-                const items = groupedItems[category] || []
-                if (items.length === 0) return null
-
-                return (
-                  <Card key={category} className="p-5">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 capitalize">
-                      {category.replace('_', ' ')}
-                    </h3>
-                    <div className="space-y-2">
-                      {items.map(item => (
-                        <PackingItemComponent
-                          key={item.id}
-                          item={{
-                            id: item.id,
-                            name: item.name,
-                            category: item.category,
-                            essential: item.essential,
-                            packed: item.packed,
-                            custom: item.custom,
-                          }}
-                          editingItem={editingItem}
-                          onTogglePacked={() => handleTogglePacked(item.id)}
-                          onDelete={() => handleDeleteItem(item.id)}
-                          onEdit={(itemId, newName) => handleEditItem(itemId, newName)}
-                          onStartEdit={(itemId) => setEditingItem(itemId)}
-                          onCancelEdit={() => setEditingItem(null)}
-                        />
-                      ))}
-                    </div>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
         </div>
-
       </div>
     </div>
   )
