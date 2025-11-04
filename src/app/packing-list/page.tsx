@@ -37,6 +37,12 @@ export default function PackingListPage() {
     tripType: string
   } | null>(STORAGE_KEYS.currentTrip, null)
   
+  const [isLoading, setIsLoading] = useState(true)
+  const [editingItem, setEditingItem] = useState<string | null>(null)
+  const [currentTripId, setCurrentTripId] = useState<string | null>(null)
+  const [isSyncingToDb, setIsSyncingToDb] = useState(false)
+  const [hasUser, setHasUser] = useState(false)
+  
   const {
     packingList,
     updatePackingList,
@@ -48,12 +54,6 @@ export default function PackingListPage() {
     groupedItems,
     sortedCategories
   } = usePackingList(currentTripId || undefined)
-  
-  const [isLoading, setIsLoading] = useState(true)
-  const [editingItem, setEditingItem] = useState<string | null>(null)
-  const [currentTripId, setCurrentTripId] = useState<string | null>(null)
-  const [isSyncingToDb, setIsSyncingToDb] = useState(false)
-  const [hasUser, setHasUser] = useState(false)
 
   // Get trip ID and user info on mount
   useEffect(() => {
