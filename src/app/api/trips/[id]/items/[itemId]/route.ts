@@ -103,6 +103,7 @@ export async function PUT(
         .from('packing_items')
         .select('packed')
         .eq('trip_id', tripId)
+        .is('deleted_at', null)  // Exclude soft-deleted items
 
       if (allItems && allItems.length > 0) {
         const packedCount = (allItems as { packed: boolean }[]).filter(i => i.packed).length
@@ -159,10 +160,13 @@ export async function DELETE(
       )
     }
 
-    // Delete item
+    // Soft delete item by setting deleted_at timestamp
     const { error } = await supabaseServer
       .from('packing_items')
-      .delete()
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as never)
       .eq('id', itemId)
       .eq('trip_id', tripId)
 
@@ -180,11 +184,12 @@ export async function DELETE(
       .update({ updated_at: new Date().toISOString() } as never)
       .eq('id', tripId)
 
-    // Recalculate completion percentage
+    // Recalculate completion percentage (exclude deleted items)
     const { data: allItems } = await supabaseServer
       .from('packing_items')
       .select('packed')
       .eq('trip_id', tripId)
+      .is('deleted_at', null)  // Exclude soft-deleted items
 
     if (allItems && allItems.length > 0) {
       const packedCount = (allItems as { packed: boolean }[]).filter(i => i.packed).length
