@@ -85,6 +85,18 @@ export default function TripsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, sort, currentUser])
 
+  // Filter trips based on search query
+  const filteredTrips = filters.searchQuery
+    ? trips.filter(trip => {
+        const searchLower = filters.searchQuery!.toLowerCase()
+        return (
+          trip.destination_city.toLowerCase().includes(searchLower) ||
+          trip.destination_country.toLowerCase().includes(searchLower) ||
+          trip.destination_display_name?.toLowerCase().includes(searchLower)
+        )
+      })
+    : trips
+
   // Auto-select trip for weather display
   useEffect(() => {
     if (filteredTrips.length > 0 && !selectedTripId) {
@@ -155,17 +167,6 @@ export default function TripsPage() {
       addToast({ title: 'Failed to update trip', type: 'error' })
     }
   }
-
-  const filteredTrips = filters.searchQuery
-    ? trips.filter(trip => {
-        const searchLower = filters.searchQuery!.toLowerCase()
-        return (
-          trip.destination_city.toLowerCase().includes(searchLower) ||
-          trip.destination_country.toLowerCase().includes(searchLower) ||
-          trip.destination_display_name?.toLowerCase().includes(searchLower)
-        )
-      })
-    : trips
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
