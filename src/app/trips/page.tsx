@@ -7,6 +7,7 @@ import { useTripStats } from '@/hooks/useTripStats'
 import { TripCard } from '@/components/trips/TripCard'
 import { TripFilters } from '@/components/trips/TripFilters'
 import { TripStatistics } from '@/components/trips/TripStatistics'
+import { WeatherSidebar } from '@/components/trips/WeatherSidebar'
 import { Button } from '@/components/ui/Button'
 import { Loading } from '@/components/ui/Loading'
 import { useToast } from '@/components/ui/Toast'
@@ -20,6 +21,7 @@ export default function TripsPage() {
   const [filters, setFilters] = useState<TripFiltersType>({})
   const [sort, setSort] = useState<SortOptions>({ sortBy: 'created_at', sortOrder: 'desc' })
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
 
   const {
     trips,
@@ -82,6 +84,20 @@ export default function TripsPage() {
     // The function is stable with empty dependency array in the hook
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, sort, currentUser])
+
+  // Auto-select trip for weather display
+  useEffect(() => {
+    if (filteredTrips.length > 0 && !selectedTripId) {
+      // Prefer active trips, then most recent trip
+      const activeTrip = filteredTrips.find(t => t.status === 'active')
+      const tripToSelect = activeTrip || filteredTrips[0]
+      setSelectedTripId(tripToSelect.id)
+    }
+    // Reset selection if selected trip is no longer in filtered list
+    if (selectedTripId && !filteredTrips.find(t => t.id === selectedTripId)) {
+      setSelectedTripId(null)
+    }
+  }, [filteredTrips, selectedTripId])
 
   const handleFilterChange = (newFilters: TripFiltersType) => {
     setFilters(newFilters)
@@ -253,18 +269,32 @@ export default function TripsPage() {
               </p>
             </div>
 
-            {/* Trip Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTrips.map(trip => (
-                <TripCard
-                  key={trip.id}
-                  trip={trip}
-                  onView={handleViewTrip}
-                  onDuplicate={handleDuplicateTrip}
-                  onDelete={handleDeleteTrip}
-                  onToggleFavorite={handleToggleFavorite}
+            {/* Two-Column Layout: Weather Sidebar + Trip Grid */}
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Left Column: Weather Sidebar */}
+              <aside className="lg:w-[35%] lg:sticky lg:top-8 lg:self-start">
+                <WeatherSidebar
+                  trips={filteredTrips}
+                  selectedTripId={selectedTripId}
+                  onTripSelect={setSelectedTripId}
                 />
-              ))}
+              </aside>
+
+              {/* Right Column: Trip Grid */}
+              <main className="lg:w-[65%]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredTrips.map(trip => (
+                    <TripCard
+                      key={trip.id}
+                      trip={trip}
+                      onView={handleViewTrip}
+                      onDuplicate={handleDuplicateTrip}
+                      onDelete={handleDeleteTrip}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
+                  ))}
+                </div>
+              </main>
             </div>
           </>
         )}
