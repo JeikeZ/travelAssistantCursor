@@ -241,7 +241,7 @@ function CitySearchInputComponent({
           placeholder={placeholder}
           disabled={disabled}
           className={cn(
-            'flex h-10 w-full rounded-md border border-gray-300 bg-white pl-10 pr-10 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 pl-10 pr-10 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50',
             error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
             className
           )}
@@ -265,11 +265,11 @@ function CitySearchInputComponent({
           id="city-listbox"
           role="listbox"
           aria-label="Search results"
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+          className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto"
         >
           {options.length === 0 && !isLoading && inputValue.trim().length >= 2 && (
-            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-              <Search className="h-4 w-4 mx-auto mb-2 text-gray-400" />
+            <div className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 text-center">
+              <Search className="h-4 w-4 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
               No cities found for &ldquo;{inputValue}&rdquo;
             </div>
           )}
@@ -304,8 +304,8 @@ function CitySearchInputComponent({
               role="option"
               aria-selected={index === highlightedIndex}
               aria-label={`Select ${option.displayName}`}
-              className={cn(
-                'w-full px-4 py-3 text-left text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none',
+                className={cn(
+                'w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:bg-gray-50 dark:focus:bg-gray-700 focus:outline-none',
                 index === highlightedIndex && 'bg-blue-50 text-blue-700',
                 'border-b border-gray-100 last:border-b-0'
               )}
@@ -313,12 +313,12 @@ function CitySearchInputComponent({
               onMouseEnter={() => setHighlightedIndex(index)}
             >
               <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">
+                  <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
                     {option.name}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 truncate">
                     {option.admin1 && `${option.admin1}, `}{option.country}
                   </div>
                 </div>

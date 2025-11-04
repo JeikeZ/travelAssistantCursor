@@ -508,10 +508,10 @@ export default function PackingListPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-700">
+          <p className="text-gray-800 dark:text-gray-200">
             {isSyncingToDb ? 'Syncing with database...' : 'Generating your personalized packing list...'}
           </p>
         </div>
@@ -520,7 +520,7 @@ export default function PackingListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <PageHeader
         title="Packing List"
         subtitle={tripData ? `${tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`} ? ${tripData.duration} days ? ${tripData.tripType}` : undefined}
@@ -545,12 +545,12 @@ export default function PackingListPage() {
                 <Suspense fallback={
                   <Card className="w-full">
                     <CardHeader>
-                      <h3 className="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Weather Forecast</h3>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-center py-8">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                        <span className="ml-2 text-slate-600">Loading weather...</span>
+                        <span className="ml-2 text-gray-700 dark:text-gray-300">Loading weather...</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -574,7 +574,7 @@ export default function PackingListPage() {
                   max={progress.totalItems}
                   showPercentage={true}
                 />
-                <div className="flex justify-between text-sm text-slate-700 mt-2">
+                <div className="flex justify-between text-sm text-gray-800 dark:text-gray-200 mt-2">
                   <span>{progress.packedItems} of {progress.totalItems} items packed</span>
                   <span>
                     {progress.progress === 100 ? (
@@ -595,9 +595,9 @@ export default function PackingListPage() {
               {sortedCategories.map((category) => (
                 <Card key={category}>
                   <CardHeader>
-                    <h3 className="text-lg font-semibold text-gray-900 capitalize">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
                       {getCategoryLabel(category)}
-                      <span className="ml-2 text-sm font-normal text-slate-600">
+                      <span className="ml-2 text-sm font-normal text-gray-700 dark:text-gray-300">
                         ({groupedItems[category].filter(item => item.packed).length}/{groupedItems[category].length})
                       </span>
                     </h3>

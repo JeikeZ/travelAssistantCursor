@@ -91,7 +91,7 @@ export function TripCard({
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {trip.destination_display_name || `${trip.destination_city}, ${trip.destination_country}`}
                 </h3>
                 {trip.is_favorite && (
@@ -104,7 +104,7 @@ export function TripCard({
                   </button>
                 )}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
                 {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {tripTypeLabels[trip.trip_type]}
               </p>
             </div>
@@ -120,7 +120,7 @@ export function TripCard({
 
           {/* Dates */}
           {trip.start_date && (
-            <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mb-3 text-sm text-gray-700 dark:text-gray-300">
               <span>{formatDate(trip.start_date)}</span>
               {trip.end_date && (
                 <>
@@ -134,10 +134,10 @@ export function TripCard({
           {/* Progress */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                 Packing Progress
               </span>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-gray-700 dark:text-gray-300">
                 {trip.completion_percentage}%
               </span>
             </div>
@@ -146,7 +146,7 @@ export function TripCard({
 
           {/* Notes (if any) */}
           {trip.notes && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
               {trip.notes}
             </p>
           )}

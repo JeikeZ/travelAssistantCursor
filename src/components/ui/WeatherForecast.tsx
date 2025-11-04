@@ -90,7 +90,7 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-            <span className="ml-2 text-slate-600">Loading weather...</span>
+            <span className="ml-2 text-gray-700 dark:text-gray-300">Loading weather...</span>
           </div>
         </CardContent>
       </Card>
@@ -134,7 +134,7 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <CloudRain className="w-6 h-6 text-gray-400" />
-            <span className="ml-2 text-slate-600">{error}</span>
+            <span className="ml-2 text-gray-700 dark:text-gray-300">{error}</span>
           </div>
         </CardContent>
       </Card>
@@ -175,7 +175,7 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
             </button>
           </div>
         </div>
-        <p className="text-sm text-slate-600">{weatherData.location}</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{weatherData.location}</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -205,21 +205,21 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
                 <div className="flex items-center space-x-4">
                   <span className={`${isToday ? 'text-3xl' : 'text-2xl'}`}>{day.icon}</span>
                   <div>
-                    <div className={`font-medium ${isToday ? 'text-blue-900 text-lg' : 'text-gray-900'}`}>
+                    <div className={`font-medium ${isToday ? 'text-blue-900 dark:text-blue-300 text-lg' : 'text-gray-900 dark:text-gray-100'}`}>
                       {formatDate(day.date)}
                     </div>
-                    <div className={`text-sm ${isToday ? 'text-blue-700' : 'text-slate-600'}`}>
+                    <div className={`text-sm ${isToday ? 'text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
                       {day.description}
                     </div>
                   </div>
                 </div>
                 
                 <div className="text-right">
-                  <div className={`font-semibold ${isToday ? 'text-blue-900 text-lg' : 'text-gray-900'}`}>
+                  <div className={`font-semibold ${isToday ? 'text-blue-900 dark:text-blue-300 text-lg' : 'text-gray-900 dark:text-gray-100'}`}>
                     {convertTemperature(day.maxTemp, 'C', temperatureUnit)}° / {convertTemperature(day.minTemp, 'C', temperatureUnit)}°
                   </div>
                   {day.precipitationProbability > 0 && (
-                    <div className={`text-sm flex items-center ${isToday ? 'text-blue-700' : 'text-blue-600'}`}>
+                    <div className={`text-sm flex items-center ${isToday ? 'text-blue-700 dark:text-blue-400' : 'text-blue-600'}`}>
                       <CloudRain className="w-3 h-3 mr-1" />
                       {day.precipitationProbability}%
                     </div>
@@ -230,8 +230,8 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
           })}
         </div>
         
-        <div className="mt-4 pt-3 border-t border-gray-200">
-          <p className="text-xs text-slate-500 text-center">
+        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
             Weather data provided by Open-Meteo
           </p>
         </div>

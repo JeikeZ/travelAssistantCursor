@@ -31,7 +31,7 @@ function CheckboxComponent({ className, label, description, error, disabled, ...
             'peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2',
             props.checked
               ? 'bg-blue-600 border-blue-600'
-              : 'border-gray-300 hover:border-blue-400',
+              : 'border-gray-300 dark:border-gray-600 hover:border-blue-400',
             disabled && 'opacity-50 cursor-not-allowed',
             error && 'border-red-500',
             className
@@ -58,7 +58,7 @@ function CheckboxComponent({ className, label, description, error, disabled, ...
           <label 
             htmlFor={id}
             className={cn(
-              'text-sm font-medium text-slate-900 cursor-pointer select-none',
+              'text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer select-none',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
@@ -68,7 +68,7 @@ function CheckboxComponent({ className, label, description, error, disabled, ...
         {description && (
           <p 
             id={descriptionId}
-            className="text-sm text-slate-600 mt-1"
+            className="text-sm text-gray-700 dark:text-gray-300 mt-1"
           >
             {description}
           </p>

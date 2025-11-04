@@ -182,11 +182,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Content */}
-        <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-3xl shadow-2xl p-8 relative">
+        <div className="bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-900 rounded-3xl shadow-2xl p-8 relative">
           {/* Close Button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 transition-colors"
+            className="absolute top-4 right-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
             aria-label="Close modal"
           >
             <X size={24} />
@@ -194,10 +194,10 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               Welcome to the Travel Assistant
             </h2>
-            <p className="text-gray-700 text-sm">
+            <p className="text-gray-800 dark:text-gray-200 text-sm">
               {mode === 'login' 
                 ? 'Please login to access your trip information'
                 : 'Please create an account with a unique username and password to store packing list information'
@@ -214,14 +214,14 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 placeholder="Username"
                 value={credentials.username}
                 onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
-                className="w-full h-12 px-4 bg-white rounded-full border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 placeholder:text-gray-500"
+                className="w-full h-12 px-4 bg-white dark:bg-gray-700 rounded-full border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 disabled={isLoading}
               />
               {credentials.username && (
                 <button
                   type="button"
                   onClick={() => setCredentials(prev => ({ ...prev, username: '' }))}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   aria-label="Clear username"
                 >
                   <X size={18} />
@@ -239,14 +239,14 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 placeholder="Password"
                 value={credentials.password}
                 onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
-                className="w-full h-12 px-4 pr-12 bg-white rounded-full border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 placeholder:text-gray-500"
+                className="w-full h-12 px-4 pr-12 bg-white dark:bg-gray-700 rounded-full border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 disabled={isLoading}
               />
               {credentials.password && (
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -265,14 +265,14 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   placeholder="Confirm Password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-12 px-4 pr-12 bg-white rounded-full border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 placeholder:text-gray-500"
+                  className="w-full h-12 px-4 pr-12 bg-white dark:bg-gray-700 rounded-full border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                   disabled={isLoading}
                 />
                 {confirmPassword && (
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                     aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -286,7 +286,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
             {/* Password Requirements (only show in register mode) */}
             {mode === 'register' && (
-              <div className="text-xs text-gray-600 ml-4 space-y-1">
+              <div className="text-xs text-gray-700 dark:text-gray-300 ml-4 space-y-1">
                 <p>Password must:</p>
                 <ul className="list-disc list-inside ml-2">
                   <li>Be at least 8 characters long</li>
@@ -328,7 +328,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             </div>
 
             {/* Guest Login Button */}
-            <div className="text-center pt-4 border-t border-gray-300">
+            <div className="text-center pt-4 border-t border-gray-400 dark:border-gray-600">
               <button
                 type="button"
                 onClick={handleGuestLogin}
@@ -341,7 +341,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   'Continue as Guest'
                 )}
               </button>
-              <p className="text-xs text-gray-600 mt-2">
+              <p className="text-xs text-gray-700 dark:text-gray-300 mt-2">
                 No account needed. Your data will be stored locally.
               </p>
             </div>

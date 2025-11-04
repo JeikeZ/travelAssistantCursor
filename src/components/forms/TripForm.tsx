@@ -89,7 +89,7 @@ export const TripForm = memo(function TripForm({ onSubmit, isLoading = false }: 
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <MapPin className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-medium text-gray-800">Destination</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Destination</span>
         </div>
         <CitySearchInput
           value={formData.destination}
@@ -104,7 +104,7 @@ export const TripForm = memo(function TripForm({ onSubmit, isLoading = false }: 
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <Calendar className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-medium text-gray-800">Trip Duration</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Trip Duration</span>
         </div>
         <Select
           options={DURATION_OPTIONS}
@@ -119,7 +119,7 @@ export const TripForm = memo(function TripForm({ onSubmit, isLoading = false }: 
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <Briefcase className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-medium text-gray-800">Trip Type</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Trip Type</span>
         </div>
         <Select
           options={TRIP_TYPES}

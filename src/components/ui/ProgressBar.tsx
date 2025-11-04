@@ -20,11 +20,11 @@ export function ProgressBar({
     <div className="space-y-2">
       {showPercentage && (
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Packing Progress</span>
+          <span className="text-gray-700 dark:text-gray-300">Packing Progress</span>
           <span className="font-medium text-blue-600">{percentage}%</span>
         </div>
       )}
-      <div className={cn('w-full bg-gray-200 rounded-full h-3', className)}>
+      <div className={cn('w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3', className)}>
         <div
           className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300 ease-out"
           style={{ width: `${percentage}%` }}
