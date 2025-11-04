@@ -185,3 +185,73 @@ export function formatDate(dateString: string): string {
     return 'Invalid Date'
   }
 }
+
+/**
+ * Cleans up old trip-specific packing list entries from localStorage
+ * Keeps only the most recent N entries to prevent unbounded growth
+ * @param maxEntries Maximum number of trip-specific entries to keep (default: 5)
+ * @param packingListKeyPrefix The prefix used for trip-specific keys (default: 'currentPackingList-')
+ */
+export function cleanupOldPackingListEntries(
+  maxEntries: number = 5,
+  packingListKeyPrefix: string = 'currentPackingList-'
+): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    // Find all trip-specific packing list keys
+    const packingListKeys: Array<{ key: string; timestamp: number }> = []
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(packingListKeyPrefix)) {
+        try {
+          const data = localStorage.getItem(key)
+          if (data) {
+            const parsed = JSON.parse(data)
+            // Use the most recent item's timestamp or current time as fallback
+            const timestamp = Array.isArray(parsed) && parsed.length > 0
+              ? new Date().getTime() // Use current time as proxy for access time
+              : 0
+            packingListKeys.push({ key, timestamp })
+          }
+        } catch {
+          // If parsing fails, add with timestamp 0 so it gets cleaned up
+          packingListKeys.push({ key, timestamp: 0 })
+        }
+      }
+    }
+
+    // Sort by timestamp (oldest first) and remove excess entries
+    if (packingListKeys.length > maxEntries) {
+      packingListKeys
+        .sort((a, b) => a.timestamp - b.timestamp)
+        .slice(0, packingListKeys.length - maxEntries)
+        .forEach(({ key }) => {
+          localStorage.removeItem(key)
+          console.log(`Cleaned up old packing list: ${key}`)
+        })
+    }
+  } catch (error) {
+    console.error('Error cleaning up old packing list entries:', error)
+  }
+}
+
+/**
+ * Removes a specific trip's packing list from localStorage
+ * @param tripId The trip ID to remove
+ * @param packingListKeyPrefix The prefix used for trip-specific keys (default: 'currentPackingList-')
+ */
+export function removeTripPackingList(
+  tripId: string,
+  packingListKeyPrefix: string = 'currentPackingList-'
+): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    const key = `${packingListKeyPrefix}${tripId}`
+    localStorage.removeItem(key)
+  } catch (error) {
+    console.error(`Error removing packing list for trip ${tripId}:`, error)
+  }
+}

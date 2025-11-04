@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Loading } from '@/components/ui/Loading'
 import { useToast } from '@/components/ui/Toast'
 import { STORAGE_KEYS } from '@/lib/constants'
+import { cleanupOldPackingListEntries } from '@/lib/utils'
 import type { TripFilters as TripFiltersType, SortOptions, User } from '@/types'
 
 export default function TripsPage() {
@@ -38,7 +39,7 @@ export default function TripsPage() {
 
   const { stats, isLoading: statsLoading } = useTripStats()
 
-  // Get current user from localStorage
+  // Get current user from localStorage and cleanup old packing lists
   useEffect(() => {
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
@@ -49,6 +50,10 @@ export default function TripsPage() {
         localStorage.removeItem('user')
       }
     }
+
+    // Clean up old trip-specific packing list entries to prevent localStorage bloat
+    // Keeps only the 5 most recent entries
+    cleanupOldPackingListEntries(5)
   }, [])
 
   // Fetch trips on mount and when user changes
@@ -105,6 +110,10 @@ export default function TripsPage() {
     // Store trip data and ID in localStorage
     localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
     localStorage.setItem('currentTripId', tripId)
+
+    // Clear the global packing list key to prevent stale data issues
+    // The trip-specific key will be used instead
+    localStorage.removeItem(STORAGE_KEYS.currentPackingList)
 
     // Navigate to packing list page
     router.push('/packing-list')

@@ -20,8 +20,10 @@ const areArraysEqual = (a: PackingItem[], b: PackingItem[]): boolean => {
   })
 }
 
-export function usePackingList(): UsePackingListReturn {
-  const [packingList, setPackingList] = useLocalStorage<PackingItem[]>(STORAGE_KEYS.currentPackingList, [])
+export function usePackingList(tripId?: string): UsePackingListReturn {
+  // Use trip-specific localStorage key to prevent cross-contamination between trips
+  const storageKey = tripId ? `${STORAGE_KEYS.currentPackingList}-${tripId}` : STORAGE_KEYS.currentPackingList
+  const [packingList, setPackingList] = useLocalStorage<PackingItem[]>(storageKey as any, [])
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastPackingListRef = useRef<PackingItem[]>([])
   
