@@ -30,10 +30,10 @@ export const PackingItemComponent = memo(function PackingItemComponent({
     <div
       className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
         item.packed
-          ? 'bg-green-50 border-green-200'
+          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
           : item.essential
-          ? 'bg-orange-50 border-orange-200'
-          : 'bg-white border-gray-200'
+          ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
       }`}
     >
       <Checkbox
@@ -62,7 +62,7 @@ export const PackingItemComponent = memo(function PackingItemComponent({
         ) : (
           <span
             className={`${
-              item.packed ? 'line-through text-slate-600' : 'text-slate-900'
+              item.packed ? 'line-through text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'
             }`}
           >
             {item.name}
@@ -85,7 +85,7 @@ export const PackingItemComponent = memo(function PackingItemComponent({
           variant="ghost"
           size="sm"
           onClick={() => onDelete(item.id)}
-          className="text-red-600 hover:text-red-700"
+          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
         >
           <Trash2 className="w-4 h-4" />
         </Button>

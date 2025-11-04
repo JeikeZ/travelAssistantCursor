@@ -127,7 +127,7 @@ const HomePage = memo(function HomePage() {
   }, [router, currentUser, startTransition])
 
   return (
-    <div className="min-h-screen bg-gray-200">
+    <div className="min-h-screen bg-gray-200 dark:bg-gray-900">
       <Header 
         title="Travel Assistant"
         subtitle="Generate personalized packing lists for your perfect trip"
@@ -135,11 +135,11 @@ const HomePage = memo(function HomePage() {
 
       {/* User Info Bar */}
       {currentUser && (
-        <div className="bg-white border-b border-gray-200 py-3">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-3">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-gray-800 dark:text-gray-200">
               Welcome{currentUser.is_guest ? '' : ' back'}, <span className="font-semibold">{currentUser.username}</span>
-              {currentUser.is_guest && <span className="text-gray-500 ml-1">(Guest)</span>}!
+              {currentUser.is_guest && <span className="text-gray-600 dark:text-gray-400 ml-1">(Guest)</span>}!
             </p>
             <div className="flex items-center gap-4">
               {!currentUser.is_guest && (
@@ -166,9 +166,9 @@ const HomePage = memo(function HomePage() {
 
       {/* Guest User Banner */}
       {currentUser && currentUser.is_guest && (
-        <div className="bg-blue-50 border-b border-blue-200 py-3">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 py-3">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p className="text-sm text-blue-800 text-center">
+            <p className="text-sm text-blue-900 dark:text-blue-200 text-center">
               💡 <span className="font-medium">Create an account</span> to save your trips permanently and access them from any device!
             </p>
           </div>
@@ -177,13 +177,13 @@ const HomePage = memo(function HomePage() {
 
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="bg-gray-300 border-0 rounded-2xl shadow-lg">
+        <Card className="bg-gray-300 dark:bg-gray-800 border-0 rounded-2xl shadow-lg">
           <CardHeader className="pb-6">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 Where are you headed?
               </h2>
-              <p className="text-gray-700 text-sm">
+              <p className="text-gray-800 dark:text-gray-200 text-sm">
                 Tell us about your trip and we&apos;ll create a personalized packing list for you.
               </p>
             </div>

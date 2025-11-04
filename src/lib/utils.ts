@@ -8,27 +8,27 @@ export function cn(...inputs: ClassValue[]) {
 // Commonly used CSS class combinations for better performance and consistency
 export const commonStyles = {
   // Layout
-  gradientBackground: 'min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50',
+  gradientBackground: 'min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900',
   centerContent: 'flex items-center justify-center',
   container: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
   
   // Cards
-  card: 'bg-white rounded-lg border border-gray-200 shadow-sm',
-  cardHover: 'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200',
-  cardInteractive: 'bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200',
+  card: 'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm',
+  cardHover: 'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-200',
+  cardInteractive: 'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200',
   
   // Buttons
   button: {
     base: 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md',
-    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300',
-    outline: 'border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 active:bg-gray-100',
-    ghost: 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md dark:bg-blue-500 dark:hover:bg-blue-600',
+    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
+    outline: 'border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 active:bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700',
+    ghost: 'text-gray-700 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 dark:active:bg-gray-700'
   },
   
   // Form elements
-  input: 'w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 disabled:opacity-50 disabled:bg-gray-50',
-  select: 'w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 disabled:opacity-50',
+  input: 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800',
+  select: 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 disabled:opacity-50',
   
   // Spacing
   spacing: {
@@ -48,14 +48,14 @@ export const commonStyles = {
   
   // Typography
   text: {
-    title: 'text-3xl font-bold text-gray-900 sm:text-4xl',
-    heading: 'text-xl font-semibold text-gray-900',
-    subheading: 'text-lg font-medium text-gray-800',
-    body: 'text-base text-slate-700',
-    muted: 'text-sm text-slate-600',
-    small: 'text-xs text-slate-500',
-    error: 'text-sm text-red-600',
-    success: 'text-sm text-green-600'
+    title: 'text-3xl font-bold text-gray-900 dark:text-gray-100 sm:text-4xl',
+    heading: 'text-xl font-semibold text-gray-900 dark:text-gray-100',
+    subheading: 'text-lg font-medium text-gray-800 dark:text-gray-200',
+    body: 'text-base text-gray-700 dark:text-gray-300',
+    muted: 'text-sm text-gray-600 dark:text-gray-400',
+    small: 'text-xs text-gray-500 dark:text-gray-400',
+    error: 'text-sm text-red-600 dark:text-red-400',
+    success: 'text-sm text-green-600 dark:text-green-400'
   },
   
   // States
