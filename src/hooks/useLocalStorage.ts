@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { LocalStorageKey } from '@/types'
 
 export function useLocalStorage<T>(
-  key: LocalStorageKey,
+  key: string,
   initialValue: T
 ): [T, (value: T | ((prev: T) => T)) => void] {
   // Get from local storage then parse stored json or return initialValue
