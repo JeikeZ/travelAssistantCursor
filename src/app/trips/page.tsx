@@ -10,7 +10,6 @@ import { TripStatistics } from '@/components/trips/TripStatistics'
 import { Button } from '@/components/ui/Button'
 import { Loading } from '@/components/ui/Loading'
 import { useToast } from '@/components/ui/Toast'
-import { STORAGE_KEYS } from '@/lib/constants'
 import { cleanupOldPackingListEntries } from '@/lib/utils'
 import type { TripFilters as TripFiltersType, SortOptions, User } from '@/types'
 
@@ -93,30 +92,9 @@ export default function TripsPage() {
   }
 
   const handleViewTrip = (tripId: string) => {
-    // Find the trip data
-    const trip = trips.find(t => t.id === tripId)
-    if (!trip) return
-
-    // Set up localStorage for the packing list page
-    const tripData = {
-      destinationCountry: trip.destination_country,
-      destinationCity: trip.destination_city,
-      destinationState: trip.destination_state || undefined,
-      destinationDisplayName: trip.destination_display_name || undefined,
-      duration: trip.duration,
-      tripType: trip.trip_type,
-    }
-
-    // Store trip data and ID in localStorage
-    localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
-    localStorage.setItem('currentTripId', tripId)
-
-    // Clear the global packing list key to prevent stale data issues
-    // The trip-specific key will be used instead
-    localStorage.removeItem(STORAGE_KEYS.currentPackingList)
-
-    // Navigate to packing list page
-    router.push('/packing-list')
+    // Navigate to the trip detail page
+    // The trip detail page loads all data from the database using the trip ID
+    router.push(`/trips/${tripId}`)
   }
 
   const handleDuplicateTrip = async (tripId: string) => {
