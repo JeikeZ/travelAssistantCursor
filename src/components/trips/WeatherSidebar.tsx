@@ -40,7 +40,7 @@ export function WeatherSidebar({ trips, selectedTripId, onTripSelect }: WeatherS
 
   if (trips.length === 0) {
     return (
-      <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900">
+      <Card className="p-6">
         <div className="text-center">
           <Cloud className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-600" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -75,7 +75,7 @@ export function WeatherSidebar({ trips, selectedTripId, onTripSelect }: WeatherS
           className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center gap-2">
-            <Cloud className="w-5 h-5 text-blue-600" />
+            <Cloud className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <span className="font-semibold text-gray-900 dark:text-white">
               Weather Forecast
             </span>
@@ -133,7 +133,7 @@ export function WeatherSidebar({ trips, selectedTripId, onTripSelect }: WeatherS
                           }}
                           className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
                             isSelected 
-                              ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600' 
+                              ? 'bg-gray-50 dark:bg-gray-700 border-l-4 border-gray-600 dark:border-gray-400' 
                               : ''
                           }`}
                         >
@@ -141,7 +141,7 @@ export function WeatherSidebar({ trips, selectedTripId, onTripSelect }: WeatherS
                             <div className="flex-1 min-w-0">
                               <p className={`text-sm font-medium truncate ${
                                 isSelected 
-                                  ? 'text-blue-900 dark:text-blue-200' 
+                                  ? 'text-gray-900 dark:text-white' 
                                   : 'text-gray-900 dark:text-white'
                               }`}>
                                 {trip.destination_display_name || 
@@ -154,7 +154,7 @@ export function WeatherSidebar({ trips, selectedTripId, onTripSelect }: WeatherS
                               </p>
                             </div>
                             {isSelected && (
-                              <span className="ml-2 text-blue-600 dark:text-blue-400">✓</span>
+                              <span className="ml-2 text-gray-600 dark:text-gray-400">✓</span>
                             )}
                           </div>
                         </button>
@@ -174,14 +174,14 @@ export function WeatherSidebar({ trips, selectedTripId, onTripSelect }: WeatherS
         />
 
         {/* Info Card */}
-        <Card className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <Card className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <div className="flex items-start gap-3">
             <div className="text-2xl">💡</div>
             <div>
-              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-1">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
                 Planning Tip
               </h4>
-              <p className="text-xs text-blue-700 dark:text-blue-300">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
                 Weather forecasts are most accurate within 7 days. Check again closer to your trip date!
               </p>
             </div>
