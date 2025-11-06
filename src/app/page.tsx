@@ -94,9 +94,9 @@ const HomePage = memo(function HomePage() {
 
         if (response.ok) {
           const data = await response.json()
-          if (data.success && data.trip) {
+          if (data.success && data.data) {
             // Store trip ID in localStorage for the packing list page
-            localStorage.setItem('currentTripId', data.trip.id)
+            localStorage.setItem('currentTripId', data.data.id)
             localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
             
             // Clear generic packing list to prevent stale data
@@ -104,7 +104,7 @@ const HomePage = memo(function HomePage() {
             
             // Pass trip ID via URL for immediate availability
             startTransition(() => {
-              router.push(`/packing-list?tripId=${data.trip.id}`)
+              router.push(`/packing-list?tripId=${data.data.id}`)
             })
             return
           }
