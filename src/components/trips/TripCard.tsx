@@ -83,7 +83,7 @@ export function TripCard({
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {trip.destination_display_name || `${trip.destination_city}, ${trip.destination_country}`}
+                  {trip.destination_display_name || `${trip.destination_city || 'Unknown'}, ${trip.destination_country || 'Unknown'}`}
                 </h3>
                 {trip.is_favorite && (
                   <button

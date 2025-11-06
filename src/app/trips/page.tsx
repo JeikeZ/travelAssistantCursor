@@ -89,8 +89,8 @@ export default function TripsPage() {
     ? trips.filter(trip => {
         const searchLower = filters.searchQuery!.toLowerCase()
         return (
-          trip.destination_city.toLowerCase().includes(searchLower) ||
-          trip.destination_country.toLowerCase().includes(searchLower) ||
+          trip.destination_city?.toLowerCase().includes(searchLower) ||
+          trip.destination_country?.toLowerCase().includes(searchLower) ||
           trip.destination_display_name?.toLowerCase().includes(searchLower)
         )
       })
