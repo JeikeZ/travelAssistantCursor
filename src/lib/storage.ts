@@ -285,7 +285,7 @@ class StorageService {
       try {
         const item = window.localStorage.getItem(key)
         if (item) {
-          const parsed: StorageItem<any> = JSON.parse(item)
+          const parsed: StorageItem<unknown> = JSON.parse(item)
           if (parsed.expiresAt && parsed.expiresAt < now) {
             window.localStorage.removeItem(key)
             count++
@@ -319,7 +319,7 @@ class StorageService {
         try {
           const item = window.localStorage.getItem(key)
           if (item) {
-            const parsed: StorageItem<any> = JSON.parse(item)
+            const parsed: StorageItem<unknown> = JSON.parse(item)
             items.push({ key, timestamp: parsed.timestamp || 0 })
           }
         } catch {

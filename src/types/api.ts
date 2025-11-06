@@ -23,7 +23,7 @@ export interface ApiResponse<T> {
 // Trip API Types
 // ============================================================================
 
-export interface CreateTripRequest {
+export interface CreateTripRequest extends Record<string, unknown> {
   destinationCountry: string
   destinationCity: string
   destinationState?: string

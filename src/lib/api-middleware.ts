@@ -24,7 +24,7 @@ export interface ApiError {
   status: number
 }
 
-export interface ApiSuccessResponse<T = any> {
+export interface ApiSuccessResponse<T = unknown> {
   success: boolean
   data?: T
   message?: string
@@ -65,8 +65,8 @@ export async function getUserFromSession(): Promise<User | null> {
  * @param handler Handler function that receives the authenticated user
  * @param options Configuration options
  */
-export async function withAuth<T = any>(
-  handler: (user: User, request: NextRequest) => Promise<NextResponse<T>>,
+export async function withAuth<T = unknown>(
+  handler: (user: User, request: NextRequest) => Promise<NextResponse<T> | NextResponse<ApiErrorResponse>>,
   options?: {
     allowGuest?: boolean
     requireVerified?: boolean
@@ -138,7 +138,7 @@ export async function verifyTripOwnership(
  * @param tripId Trip ID to verify ownership
  * @param handler Handler function that receives user and trip
  */
-export async function withTripAuth<T = any>(
+export async function withTripAuth<T = unknown>(
   request: NextRequest,
   tripId: string,
   handler: (user: User, trip: Trip, request: NextRequest) => Promise<NextResponse<T>>
@@ -148,15 +148,15 @@ export async function withTripAuth<T = any>(
       const trip = await verifyTripOwnership(tripId, user.id)
       
       if (!trip) {
-        return createErrorResponse('Trip not found', 404, 'TRIP_NOT_FOUND') as any
+        return createErrorResponse('Trip not found', 404, 'TRIP_NOT_FOUND') as NextResponse<T> | NextResponse<ApiErrorResponse>
       }
       
       return await handler(user, trip, req)
     } catch (error) {
       logger.error('Error in trip auth middleware', error as Error, { tripId, userId: user.id })
-      return createErrorResponse('Internal server error', 500, 'INTERNAL_ERROR') as any
+      return createErrorResponse('Internal server error', 500, 'INTERNAL_ERROR') as NextResponse<T> | NextResponse<ApiErrorResponse>
     }
-  }) as any
+  }) as Promise<NextResponse<T> | NextResponse<ApiErrorResponse>>
 }
 
 // ============================================================================
@@ -167,7 +167,7 @@ export async function withTripAuth<T = any>(
  * Error handling wrapper
  * Catches errors and returns standardized error responses
  */
-export async function withErrorHandling<T = any>(
+export async function withErrorHandling<T = unknown>(
   handler: () => Promise<NextResponse<T>>
 ): Promise<NextResponse<T> | NextResponse<ApiErrorResponse>> {
   try {
@@ -203,7 +203,7 @@ export async function withErrorHandling<T = any>(
  */
 export function createAuthResponse(
   user: User,
-  sessionData?: Record<string, any>
+  sessionData?: Record<string, unknown>
 ): NextResponse {
   const response = NextResponse.json({
     success: true,
@@ -246,7 +246,7 @@ export function createErrorResponse(
 /**
  * Create success response with optional caching
  */
-export function createSuccessResponse<T = any>(
+export function createSuccessResponse<T = unknown>(
   data: T,
   options?: {
     message?: string
@@ -282,7 +282,7 @@ export function createSuccessResponse<T = any>(
 /**
  * Create paginated response
  */
-export function createPaginatedResponse<T = any>(
+export function createPaginatedResponse<T = unknown>(
   data: T[],
   pagination: {
     total: number
@@ -296,7 +296,7 @@ export function createPaginatedResponse<T = any>(
       ...pagination,
       hasMore: pagination.offset + pagination.limit < pagination.total
     }
-  } as any)
+  })
 }
 
 // ============================================================================
@@ -307,7 +307,7 @@ export function createPaginatedResponse<T = any>(
  * Validate required fields in request body
  */
 export function validateRequiredFields(
-  body: Record<string, any>,
+  body: Record<string, unknown>,
   requiredFields: string[]
 ): { valid: boolean; missing?: string[] } {
   const missing = requiredFields.filter(field => {

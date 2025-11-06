@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { logger } from '@/lib/logger'
 import {
@@ -48,23 +48,25 @@ export async function POST(request: NextRequest) {
       }
 
       // Insert trip into database
+      const insertData = {
+        user_id: user.id,
+        destination_country: body.destinationCountry,
+        destination_city: body.destinationCity,
+        destination_state: body.destinationState || null,
+        destination_display_name: body.destinationDisplayName || null,
+        duration: body.duration,
+        trip_type: body.tripType,
+        start_date: body.startDate || null,
+        end_date: body.endDate || null,
+        notes: body.notes || null,
+        status: 'active' as const,
+        completion_percentage: 0,
+        is_favorite: false,
+      }
+      
       const { data: trip, error } = await supabaseServer
         .from('trips')
-        .insert({
-          user_id: user.id,
-          destination_country: body.destinationCountry,
-          destination_city: body.destinationCity,
-          destination_state: body.destinationState || null,
-          destination_display_name: body.destinationDisplayName || null,
-          duration: body.duration,
-          trip_type: body.tripType,
-          start_date: body.startDate || null,
-          end_date: body.endDate || null,
-          notes: body.notes || null,
-          status: 'active',
-          completion_percentage: 0,
-          is_favorite: false,
-        })
+        .insert(insertData as never)
         .select()
         .single()
 
