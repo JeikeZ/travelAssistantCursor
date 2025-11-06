@@ -30,7 +30,7 @@ export function useTripDetail(tripId: string): UseTripDetailReturn {
     packedItems: 0,
     completionPercentage: 0,
   })
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchTrip = useCallback(async () => {
