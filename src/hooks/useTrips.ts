@@ -4,6 +4,7 @@ import type { Trip, GetTripsQuery, CreateTripRequest } from '@/types'
 interface UseTripsReturn {
   trips: Trip[]
   isLoading: boolean
+  isInitialized: boolean
   error: string | null
   total: number
   hasMore: boolean
@@ -18,6 +19,7 @@ interface UseTripsReturn {
 export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
   const [trips, setTrips] = useState<Trip[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
   const [hasMore, setHasMore] = useState(false)
@@ -76,6 +78,7 @@ export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
       console.error('Error fetching trips:', err)
     } finally {
       setIsLoading(false)
+      setIsInitialized(true)
     }
   }, [])
 
@@ -227,6 +230,7 @@ export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
   return {
     trips,
     isLoading,
+    isInitialized,
     error,
     total,
     hasMore,

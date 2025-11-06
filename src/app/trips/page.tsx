@@ -25,6 +25,7 @@ export default function TripsPage() {
   const {
     trips,
     isLoading: tripsLoading,
+    isInitialized: tripsInitialized,
     error: tripsError,
     deleteTrip,
     duplicateTrip,
@@ -205,7 +206,7 @@ export default function TripsPage() {
         </div>
 
         {/* Content */}
-        {tripsLoading ? (
+        {!tripsInitialized || tripsLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loading size="lg" />
           </div>
