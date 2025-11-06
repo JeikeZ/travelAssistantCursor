@@ -372,5 +372,103 @@ describe('/api/weather', () => {
       expect(data.forecast[0].description).toBe('Unknown')
       expect(data.forecast[0].icon).toBe('❓')
     })
+
+    it('should handle freezing drizzle weather codes (56, 57)', async () => {
+      const weatherWithFreezingDrizzle = {
+        daily: {
+          time: ['2024-01-01', '2024-01-02'],
+          temperature_2m_max: [-2, -3],
+          temperature_2m_min: [-5, -6],
+          weather_code: [56, 57], // Light and dense freezing drizzle
+          precipitation_probability_max: [60, 75]
+        }
+      }
+
+      ;(global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockGeocodingResponse
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => weatherWithFreezingDrizzle
+        })
+
+      const request = new NextRequest('http://localhost:3000/api/weather?city=Tokyo&country=Japan')
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.forecast[0].description).toBe('Light freezing drizzle')
+      expect(data.forecast[0].icon).toBe('🌧️')
+      expect(data.forecast[1].description).toBe('Dense freezing drizzle')
+      expect(data.forecast[1].icon).toBe('🌧️')
+    })
+
+    it('should handle freezing rain weather codes (66, 67)', async () => {
+      const weatherWithFreezingRain = {
+        daily: {
+          time: ['2024-01-01', '2024-01-02'],
+          temperature_2m_max: [-1, -2],
+          temperature_2m_min: [-4, -5],
+          weather_code: [66, 67], // Light and heavy freezing rain
+          precipitation_probability_max: [70, 85]
+        }
+      }
+
+      ;(global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockGeocodingResponse
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => weatherWithFreezingRain
+        })
+
+      const request = new NextRequest('http://localhost:3000/api/weather?city=Tokyo&country=Japan')
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.forecast[0].description).toBe('Light freezing rain')
+      expect(data.forecast[0].icon).toBe('🌧️')
+      expect(data.forecast[1].description).toBe('Heavy freezing rain')
+      expect(data.forecast[1].icon).toBe('🌧️')
+    })
+
+    it('should handle snow grains and snow showers (77, 85, 86)', async () => {
+      const weatherWithSnow = {
+        daily: {
+          time: ['2024-01-01', '2024-01-02', '2024-01-03'],
+          temperature_2m_max: [-5, -3, -4],
+          temperature_2m_min: [-8, -7, -9],
+          weather_code: [77, 85, 86], // Snow grains, slight and heavy snow showers
+          precipitation_probability_max: [50, 65, 80]
+        }
+      }
+
+      ;(global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockGeocodingResponse
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => weatherWithSnow
+        })
+
+      const request = new NextRequest('http://localhost:3000/api/weather?city=Tokyo&country=Japan')
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.forecast[0].description).toBe('Snow grains')
+      expect(data.forecast[0].icon).toBe('🌨️')
+      expect(data.forecast[1].description).toBe('Slight snow showers')
+      expect(data.forecast[1].icon).toBe('❄️')
+      expect(data.forecast[2].description).toBe('Heavy snow showers')
+      expect(data.forecast[2].icon).toBe('❄️')
+    })
   })
 })
