@@ -209,7 +209,7 @@ export default function PackingListPage() {
     destinationDisplayName?: string
     duration: number
     tripType: string
-  }) => {
+  }, tripId: string | null) => {
     try {
       const response = await fetch(API_ENDPOINTS.packingList, {
         method: 'POST',
@@ -232,8 +232,8 @@ export default function PackingListPage() {
       let finalList = data.packingList
       
       // Save to database if we have a trip ID and replace with database IDs
-      if (currentTripId) {
-        const idMapping = await savePackingListToDatabase(data.packingList, currentTripId)
+      if (tripId) {
+        const idMapping = await savePackingListToDatabase(data.packingList, tripId)
         
         // Update items with database-generated IDs
         if (idMapping.size > 0) {
@@ -268,8 +268,8 @@ export default function PackingListPage() {
       let finalBasicList = basicList
       
       // Save basic list to database if we have a trip ID
-      if (currentTripId) {
-        const idMapping = await savePackingListToDatabase(basicList, currentTripId)
+      if (tripId) {
+        const idMapping = await savePackingListToDatabase(basicList, tripId)
         
         // Update basic items with database-generated IDs
         if (idMapping.size > 0) {
@@ -296,7 +296,7 @@ export default function PackingListPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [addToast, updatePackingList, currentTripId, savePackingListToDatabase])
+  }, [addToast, updatePackingList, savePackingListToDatabase])
 
   useEffect(() => {
     // Check if we have trip data
@@ -311,7 +311,7 @@ export default function PackingListPage() {
       loadPackingListFromDatabase(currentTripId).then(loaded => {
         if (!loaded) {
           // No items in database, generate new list
-          generatePackingList(tripData)
+          generatePackingList(tripData, currentTripId)
         } else {
           setIsLoading(false)
         }
@@ -319,7 +319,7 @@ export default function PackingListPage() {
     } else {
       // No trip ID (guest user) - check localStorage or generate new list
       if (packingList.length === 0) {
-        generatePackingList(tripData)
+        generatePackingList(tripData, null)
       } else {
         setIsLoading(false)
       }
