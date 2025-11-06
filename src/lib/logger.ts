@@ -123,10 +123,8 @@ class Logger {
     const consoleMethod = level === 'debug' ? 'log' : level
     
     if (context) {
-      // eslint-disable-next-line no-console
       console[consoleMethod](prefix, message, context)
     } else {
-      // eslint-disable-next-line no-console
       console[consoleMethod](prefix, message)
     }
   }
@@ -144,7 +142,6 @@ class Logger {
     
     // For now, still log to console in production for critical errors
     if (logEntry.level === 'error') {
-      // eslint-disable-next-line no-console
       console.error(logEntry.message, logEntry.context)
     }
   }
