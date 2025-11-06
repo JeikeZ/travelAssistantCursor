@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Loading } from '@/components/ui/Loading'
 import { useToast } from '@/components/ui/Toast'
 import { cleanupOldPackingListEntries } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 import type { TripFilters as TripFiltersType, SortOptions, User } from '@/types'
 
 export default function TripsPage() {
@@ -45,7 +46,7 @@ export default function TripsPage() {
       try {
         setCurrentUser(JSON.parse(storedUser))
       } catch (error) {
-        console.error('Error parsing stored user:', error)
+        logger.error('Error parsing stored user', error as Error, { component: 'TripsPage' })
         localStorage.removeItem('user')
       }
     }

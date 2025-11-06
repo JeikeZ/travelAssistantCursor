@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, memo } from 'react'
 import { Cloud, CloudRain, Loader2 } from 'lucide-react'
 import { Card, CardHeader, CardContent } from './Card'
 import { formatDate, convertTemperature } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 import { WeatherData, TemperatureUnit } from '@/types'
 import { API_ENDPOINTS } from '@/lib/constants'
 
@@ -34,7 +35,7 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
       const data: WeatherData = await response.json()
       setWeatherData(data)
     } catch (err) {
-      console.error('Error fetching weather:', err)
+      logger.error('Error fetching weather', err as Error, { city, country, component: 'WeatherForecast' })
       setError('Unable to load weather data')
     } finally {
       setIsLoading(false)

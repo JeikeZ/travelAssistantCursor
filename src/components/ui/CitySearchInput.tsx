@@ -5,6 +5,7 @@ import { MapPin, ChevronDown, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useDebouncedCallback } from '@/hooks/useDebounce'
 import { API_ENDPOINTS, TIMEOUTS } from '@/lib/constants'
+import { logger } from '@/lib/logger'
 
 import { CityOption } from '@/types'
 
@@ -73,12 +74,13 @@ function CitySearchInputComponent({
       }
       
       if (!Array.isArray(data.cities)) {
-        console.warn('Response does not contain cities array:', {
+        logger.warn('Response does not contain cities array', {
           data,
           dataType: typeof data,
           hasCitiesProperty: 'cities' in data,
           citiesType: typeof data.cities,
-          citiesValue: data.cities
+          citiesValue: data.cities,
+          component: 'CitySearchInput'
         })
         setOptions([])
       } else {
@@ -86,15 +88,15 @@ function CitySearchInputComponent({
       }
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('Error searching cities:', error)
+        logger.error('Error searching cities', error, { component: 'CitySearchInput', action: 'searchCities' })
         
         // Set user-friendly error state
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          console.error('Network error - check internet connection')
+          logger.error('Network error - check internet connection', error)
         } else if (error.message.includes('HTTP 429')) {
-          console.error('Too many requests - please wait before searching again')
+          logger.error('Too many requests - please wait before searching again', error)
         } else if (error.message.includes('HTTP 5')) {
-          console.error('Server error - please try again later')
+          logger.error('Server error - please try again later', error)
         }
         
         setOptions([])
