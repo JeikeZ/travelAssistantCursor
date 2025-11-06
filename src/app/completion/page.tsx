@@ -33,6 +33,8 @@ export default function CompletionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
 
+  const [currentTripId, setCurrentTripId] = useState<string | null>(null)
+
   useEffect(() => {
     // Get trip data from localStorage
     const storedTripData = localStorage.getItem('currentTrip')
@@ -46,6 +48,7 @@ export default function CompletionPage() {
     const user = userStr ? JSON.parse(userStr) : null
     
     if (tripId && user && !user.is_guest) {
+      setCurrentTripId(tripId)
       markTripAsCompleted(tripId)
     }
   }, [])
@@ -116,7 +119,11 @@ export default function CompletionPage() {
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
-              onClick={() => router.push('/packing-list')}
+              onClick={() => {
+                // Pass trip ID via URL if available
+                const url = currentTripId ? `/packing-list?tripId=${currentTripId}` : '/packing-list'
+                router.push(url)
+              }}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="w-4 h-4" />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { 
   CheckCircle, 
   ArrowLeft
@@ -27,6 +27,7 @@ import { PageHeader } from '@/components/layout/Header'
 
 export default function PackingListPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { addToast } = useToast()
   const [tripData] = useLocalStorage<{
     destinationCountry: string
@@ -39,9 +40,47 @@ export default function PackingListPage() {
   
   const [isLoading, setIsLoading] = useState(true)
   const [editingItem, setEditingItem] = useState<string | null>(null)
-  const [currentTripId, setCurrentTripId] = useState<string | null>(null)
+  
+  // Solution 1 & 3: Synchronously initialize trip ID from URL or localStorage
+  const [currentTripId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    
+    // Priority 1: Get trip ID from URL query parameter
+    const urlTripId = searchParams.get('tripId')
+    if (urlTripId) {
+      // Store in localStorage for page refreshes
+      localStorage.setItem('currentTripId', urlTripId)
+      return urlTripId
+    }
+    
+    // Priority 2: Fallback to localStorage (for page refreshes)
+    const storedTripId = localStorage.getItem('currentTripId')
+    const userStr = localStorage.getItem('user')
+    
+    try {
+      const user = userStr ? JSON.parse(userStr) : null
+      // Only use trip ID if user is authenticated and not a guest
+      return (storedTripId && user && !user.is_guest) ? storedTripId : null
+    } catch (error) {
+      console.error('Error parsing user data:', error)
+      return null
+    }
+  })
+  
   const [isSyncingToDb, setIsSyncingToDb] = useState(false)
-  const [hasUser, setHasUser] = useState(false)
+  
+  // Synchronously initialize hasUser state
+  const [hasUser] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const userStr = localStorage.getItem('user')
+    try {
+      const user = userStr ? JSON.parse(userStr) : null
+      return !!user && !user.is_guest
+    } catch (error) {
+      console.error('Error parsing user data:', error)
+      return false
+    }
+  })
   
   const {
     packingList,
@@ -54,21 +93,6 @@ export default function PackingListPage() {
     groupedItems,
     sortedCategories
   } = usePackingList(currentTripId || undefined)
-
-  // Get trip ID and user info on mount
-  useEffect(() => {
-    const tripId = localStorage.getItem('currentTripId')
-    const userStr = localStorage.getItem('user')
-    const user = userStr ? JSON.parse(userStr) : null
-    
-    // Track if user exists for back navigation
-    setHasUser(!!user && !user.is_guest)
-    
-    // Only set trip ID if user is authenticated and not a guest
-    if (tripId && user && !user.is_guest) {
-      setCurrentTripId(tripId)
-    }
-  }, [])
 
   // Cleanup: Remove trip-specific packing list data when leaving the page
   // This prevents stale data from affecting other trips
