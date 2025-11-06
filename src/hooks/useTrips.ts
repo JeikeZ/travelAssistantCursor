@@ -59,9 +59,17 @@ export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
       }
 
       const data = await response.json()
-      setTrips(data.trips)
-      setTotal(data.total)
-      setHasMore(data.hasMore)
+      // Handle new paginated response format
+      if (data.success && data.data) {
+        setTrips(data.data.items || [])
+        setTotal(data.data.pagination?.total || 0)
+        setHasMore(data.data.pagination?.hasMore || false)
+      } else {
+        // Fallback to old format for backward compatibility
+        setTrips(data.trips || [])
+        setTotal(data.total || 0)
+        setHasMore(data.hasMore || false)
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch trips'
       setError(errorMessage)
@@ -89,10 +97,13 @@ export function useTrips(initialFilters?: GetTripsQuery): UseTripsReturn {
       }
 
       const data = await response.json()
-      if (data.success && data.trip) {
-        // Refresh trips list
-        await fetchTrips()
-        return data.trip
+      if (data.success) {
+        const trip = data.data || data.trip // Handle both new and old format
+        if (trip) {
+          // Refresh trips list
+          await fetchTrips()
+          return trip
+        }
       }
 
       return null
