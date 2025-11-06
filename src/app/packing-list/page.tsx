@@ -19,7 +19,7 @@ const WeatherForecast = lazy(() =>
   import('@/components/ui/WeatherForecast').then(module => ({ default: module.WeatherForecast }))
 )
 
-import { PACKING_CATEGORIES, STORAGE_KEYS, API_ENDPOINTS } from '@/lib/constants'
+import { PACKING_CATEGORIES, STORAGE_KEYS, API_ENDPOINTS, TRIP_TYPES } from '@/lib/constants'
 
 import { PackingItemComponent } from '@/components/packing/PackingItemComponent'
 import { AddItemForm } from '@/components/packing/AddItemForm'
@@ -547,7 +547,7 @@ export default function PackingListPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <PageHeader
         title="Packing List"
-        subtitle={tripData ? `${tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`} ? ${tripData.duration} days ? ${tripData.tripType}` : undefined}
+        subtitle={tripData ? `${tripData.destinationDisplayName || `${tripData.destinationCity}, ${tripData.destinationCountry}`} • ${tripData.duration} Days • ${TRIP_TYPES.find(t => t.value === tripData.tripType)?.label || tripData.tripType}` : undefined}
         backButton={
           <Button
             variant="ghost"
