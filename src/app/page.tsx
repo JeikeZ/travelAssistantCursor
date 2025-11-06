@@ -98,8 +98,13 @@ const HomePage = memo(function HomePage() {
             // Store trip ID in localStorage for the packing list page
             localStorage.setItem('currentTripId', data.trip.id)
             localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
+            
+            // Clear generic packing list to prevent stale data
+            localStorage.removeItem(STORAGE_KEYS.currentPackingList)
+            
+            // Pass trip ID via URL for immediate availability
             startTransition(() => {
-              router.push('/packing-list')
+              router.push(`/packing-list?tripId=${data.trip.id}`)
             })
             return
           }
@@ -109,6 +114,8 @@ const HomePage = memo(function HomePage() {
       // For guest users or if save fails, store in localStorage
       localStorage.setItem(STORAGE_KEYS.currentTrip, JSON.stringify(tripData))
       localStorage.removeItem('currentTripId')
+      // Clear any trip-specific packing lists to start fresh
+      localStorage.removeItem(STORAGE_KEYS.currentPackingList)
       
       startTransition(() => {
         router.push('/packing-list')
