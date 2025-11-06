@@ -149,6 +149,8 @@ export function convertTemperature(temp: number, fromUnit: TemperatureUnit, toUn
   return temp
 }
 
+import { logger } from './logger'
+
 // Utility function to format date with error handling
 export function formatDate(dateString: string): string {
   try {
@@ -156,7 +158,7 @@ export function formatDate(dateString: string): string {
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
-      console.warn(`Invalid date string provided: ${dateString}`)
+      logger.warn('Invalid date string provided', { dateString })
       return 'Invalid Date'
     }
     
@@ -181,7 +183,7 @@ export function formatDate(dateString: string): string {
       })
     }
   } catch (error) {
-    console.error('Error formatting date:', error)
+    logger.error('Error formatting date', error as Error, { dateString })
     return 'Invalid Date'
   }
 }
@@ -229,11 +231,11 @@ export function cleanupOldPackingListEntries(
         .slice(0, packingListKeys.length - maxEntries)
         .forEach(({ key }) => {
           localStorage.removeItem(key)
-          console.log(`Cleaned up old packing list: ${key}`)
+          logger.debug('Cleaned up old packing list', { key })
         })
     }
   } catch (error) {
-    console.error('Error cleaning up old packing list entries:', error)
+    logger.error('Error cleaning up old packing list entries', error as Error)
   }
 }
 
@@ -252,6 +254,6 @@ export function removeTripPackingList(
     const key = `${packingListKeyPrefix}${tripId}`
     localStorage.removeItem(key)
   } catch (error) {
-    console.error(`Error removing packing list for trip ${tripId}:`, error)
+    logger.error('Error removing packing list for trip', error as Error, { tripId })
   }
 }
