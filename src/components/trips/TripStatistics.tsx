@@ -3,6 +3,7 @@
 import React from 'react'
 import { TripStatistics as TripStatsType } from '@/types'
 import { Card } from '@/components/ui/Card'
+import { TRIP_TYPE_LABELS } from '@/lib/constants'
 
 interface TripStatisticsProps {
   stats: TripStatsType
@@ -146,7 +147,7 @@ export function TripStatistics({ stats }: TripStatisticsProps) {
                     {trip.destination_display_name || `${trip.destination_city}, ${trip.destination_country}`}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {trip.trip_type}
+                    {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {TRIP_TYPE_LABELS[trip.trip_type]}
                   </p>
                 </div>
                 <span className="text-xs text-gray-600 dark:text-gray-400">

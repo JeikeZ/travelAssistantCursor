@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { TRIP_TYPE_LABELS } from '@/lib/constants'
 
 interface TripCardProps {
   trip: Trip
@@ -62,16 +63,6 @@ export function TripCard({
     archived: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
   }
 
-  const tripTypeLabels = {
-    business: 'Business',
-    leisure: 'Leisure',
-    beach: 'Beach',
-    hiking: 'Hiking',
-    city: 'City',
-    winter: 'Winter',
-    backpacking: 'Backpacking',
-  }
-
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Not set'
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -105,7 +96,7 @@ export function TripCard({
                 )}
               </div>
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {tripTypeLabels[trip.trip_type]}
+                {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {TRIP_TYPE_LABELS[trip.trip_type]}
               </p>
             </div>
             <span
