@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Loading } from '@/components/ui/Loading'
 import { useToast } from '@/components/ui/Toast'
+import { TRIP_TYPE_LABELS } from '@/lib/constants'
 import type { PackingCategory, PackingItem } from '@/types'
 
 // Lazy load WeatherForecast component
@@ -224,7 +225,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
                     </button>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400">
-                    {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {trip.trip_type} trip
+                    {trip.duration} {trip.duration === 1 ? 'day' : 'days'} • {TRIP_TYPE_LABELS[trip.trip_type]} trip
                   </p>
                   {trip.start_date && (
                     <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">

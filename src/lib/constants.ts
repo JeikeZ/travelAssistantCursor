@@ -11,6 +11,17 @@ export const TRIP_TYPES = [
   { value: 'backpacking', label: 'Backpacking' },
 ] as const
 
+// Trip type labels for display (simple, capitalized versions)
+export const TRIP_TYPE_LABELS: Record<string, string> = {
+  business: 'Business',
+  leisure: 'Leisure',
+  beach: 'Beach',
+  hiking: 'Hiking',
+  city: 'City',
+  winter: 'Winter',
+  backpacking: 'Backpacking',
+} as const
+
 export const PACKING_CATEGORIES = [
   { value: 'clothing', label: 'Clothing' },
   { value: 'toiletries', label: 'Toiletries' },
