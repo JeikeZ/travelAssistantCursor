@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const packingList = await withTimeout(
       getCachedPackingList(tripData),
-      35000, // 35 second timeout for AI generation (less than Vercel's 45s)
+      40000, // 40 second timeout for AI generation with retries (less than Vercel's 45s limit)
       'Packing list generation timeout'
     )
 
