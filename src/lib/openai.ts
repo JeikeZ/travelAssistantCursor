@@ -148,7 +148,7 @@ Return in this format: {"items": [...]}`
       const parsed = JSON.parse(content)
       
       // Handle both array and object with items array
-      let itemsArray = Array.isArray(parsed) ? parsed : parsed.items || parsed.packingList || []
+      const itemsArray = Array.isArray(parsed) ? parsed : parsed.items || parsed.packingList || []
       
       if (!Array.isArray(itemsArray) || itemsArray.length === 0) {
         throw new Error('Response does not contain a valid items array')
