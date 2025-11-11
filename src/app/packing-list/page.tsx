@@ -602,7 +602,7 @@ export default function PackingListPage() {
                   <span>{progress.packedItems} of {progress.totalItems} items packed</span>
                   <span>
                     {progress.progress === 100 ? (
-                      <span className="text-green-600 font-medium">Ready to go! ??</span>
+                      <span className="text-green-600 font-medium">Ready to go!</span>
                     ) : (
                       `${Math.round(progress.progress)}% complete`
                     )}
