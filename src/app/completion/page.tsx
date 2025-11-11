@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   CheckCircle, 
-  Star, 
   Send, 
   ArrowLeft,
   Plane,
-  Heart,
   ThumbsUp
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -138,13 +136,8 @@ export default function CompletionPage() {
           <>
             {/* Completion Celebration */}
             <div className="text-center mb-12">
-              <div className="relative">
-                <div className="w-32 h-32 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <CheckCircle className="w-16 h-16 text-white" />
-                </div>
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
-                  <Star className="w-4 h-4 text-yellow-800 fill-current" />
-                </div>
+              <div className="w-32 h-32 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <CheckCircle className="w-16 h-16 text-white" />
               </div>
               
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
@@ -195,17 +188,8 @@ export default function CompletionPage() {
             {/* Action Buttons */}
             <div className="space-y-4">
               <Button
-                onClick={handleShowFeedback}
-                size="lg"
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                <Heart className="w-5 h-5 mr-2" />
-                Share Your Experience
-              </Button>
-              
-              <Button
                 onClick={handleStartNewTrip}
-                variant="outline"
+                variant="primary"
                 size="lg"
                 className="w-full"
               >
