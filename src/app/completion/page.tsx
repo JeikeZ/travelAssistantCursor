@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
+import { PageHeader } from '@/components/layout/Header'
 
 export default function CompletionPage() {
   const router = useRouter()
@@ -112,32 +113,25 @@ export default function CompletionPage() {
   const isValidFeedback = feedback.confidenceScore > 0 && feedback.wouldRecommend !== null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                // Pass trip ID via URL if available
-                const url = currentTripId ? `/packing-list?tripId=${currentTripId}` : '/packing-list'
-                router.push(url)
-              }}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to List</span>
-            </Button>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Ready to Travel!
-              </h1>
-            </div>
-            <div className="w-20"></div> {/* Spacer for centering */}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <PageHeader
+        title="Ready to Travel!"
+        subtitle={tripData ? `${tripData.destinationCity}, ${tripData.destinationCountry}` : undefined}
+        backButton={
+          <Button
+            variant="ghost"
+            onClick={() => {
+              // Pass trip ID via URL if available
+              const url = currentTripId ? `/packing-list?tripId=${currentTripId}` : '/packing-list'
+              router.push(url)
+            }}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to List</span>
+          </Button>
+        }
+      />
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!showFeedback ? (
@@ -153,13 +147,13 @@ export default function CompletionPage() {
                 </div>
               </div>
               
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                 You&apos;re All Set! 🎉
               </h2>
-              <p className="text-xl text-slate-700 mb-8">
+              <p className="text-xl text-gray-700 dark:text-gray-300 mb-8">
                 Your packing list is complete and you&apos;re ready for your adventure
                 {tripData && (
-                  <span className="block mt-2 font-medium text-blue-600">
+                  <span className="block mt-2 font-medium text-blue-600 dark:text-blue-400">
                     to {tripData.destinationCity}, {tripData.destinationCountry}
                   </span>
                 )}
@@ -168,30 +162,30 @@ export default function CompletionPage() {
 
             {/* Trip Summary */}
             {tripData && (
-              <Card className="mb-8 shadow-lg">
+              <Card className="mb-8 shadow-lg bg-white dark:bg-gray-800">
                 <CardHeader>
-                  <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <Plane className="w-5 h-5 mr-2 text-blue-600" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <Plane className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
                     Trip Summary
                   </h3>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium text-slate-800">Destination:</span>
-                      <p className="text-slate-900">{tripData.destinationCity}, {tripData.destinationCountry}</p>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Destination:</span>
+                      <p className="text-gray-900 dark:text-gray-100">{tripData.destinationCity}, {tripData.destinationCountry}</p>
                     </div>
                     <div>
-                      <span className="font-medium text-slate-800">Duration:</span>
-                      <p className="text-slate-900">{tripData.duration} days</p>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Duration:</span>
+                      <p className="text-gray-900 dark:text-gray-100">{tripData.duration} days</p>
                     </div>
                     <div>
-                      <span className="font-medium text-slate-800">Trip Type:</span>
-                      <p className="text-slate-900 capitalize">{tripData.tripType}</p>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Trip Type:</span>
+                      <p className="text-gray-900 dark:text-gray-100 capitalize">{tripData.tripType}</p>
                     </div>
                     <div>
-                      <span className="font-medium text-slate-800">Status:</span>
-                      <p className="text-green-600 font-medium">✅ Ready to go!</p>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Status:</span>
+                      <p className="text-green-600 dark:text-green-400 font-medium">✅ Ready to go!</p>
                     </div>
                   </div>
                 </CardContent>
@@ -220,11 +214,11 @@ export default function CompletionPage() {
             </div>
 
             {/* Safe Travels Message */}
-            <div className="mt-12 text-center p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <div className="mt-12 text-center p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 Have an Amazing Trip! ✈️
               </h3>
-              <p className="text-slate-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 Don&apos;t forget to double-check your essential items before leaving, 
                 and have a wonderful time exploring {tripData?.destinationCity}!
               </p>
@@ -234,12 +228,12 @@ export default function CompletionPage() {
           <>
             {/* Feedback Form */}
             {!feedbackSubmitted ? (
-              <Card className="shadow-lg">
+              <Card className="shadow-lg bg-white dark:bg-gray-800">
                 <CardHeader>
-                  <h3 className="text-2xl font-semibold text-gray-900 text-center">
+                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 text-center">
                     Help Us Improve
                   </h3>
-                  <p className="text-slate-700 text-center">
+                  <p className="text-gray-700 dark:text-gray-300 text-center">
                     Your feedback helps us create better packing lists for everyone
                   </p>
                 </CardHeader>
@@ -339,13 +333,13 @@ export default function CompletionPage() {
               <>
                 {/* Thank You Message */}
                 <div className="text-center">
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle className="w-10 h-10 text-green-600" />
+                  <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                     Thank You!
                   </h3>
-                  <p className="text-slate-700 mb-8">
+                  <p className="text-gray-700 dark:text-gray-300 mb-8">
                     Your feedback has been submitted and will help us improve the experience for future travelers.
                   </p>
                   
@@ -357,11 +351,11 @@ export default function CompletionPage() {
                     Plan Another Trip
                   </Button>
                   
-                  <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl">
-                    <h4 className="font-semibold text-gray-900 mb-2">
+                  <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       Safe Travels! 🌟
                     </h4>
-                    <p className="text-slate-700">
+                    <p className="text-gray-700 dark:text-gray-300">
                       We hope you have an amazing trip to {tripData?.destinationCity}!
                     </p>
                   </div>
