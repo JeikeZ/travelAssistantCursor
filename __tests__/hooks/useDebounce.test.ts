@@ -381,7 +381,7 @@ describe('useDebouncedCallback', () => {
     })
 
     it('handles callback that throws error', () => {
-      const mockCallback = jest.fn(() => {
+      const mockCallback = jest.fn((arg: string) => {
         throw new Error('Test error')
       })
       

@@ -78,9 +78,6 @@ export default function CompletionPage() {
     router.push('/')
   }
 
-  const handleShowFeedback = () => {
-    setShowFeedback(true)
-  }
 
   const handleConfidenceScore = (score: number) => {
     setFeedback(prev => ({ ...prev, confidenceScore: score }))
