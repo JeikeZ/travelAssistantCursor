@@ -217,7 +217,7 @@ function WeatherForecastComponent({ city, country }: WeatherForecastProps) {
                 
                 <div className="text-right">
                   <div className={`font-semibold ${isToday ? 'text-gray-900 dark:text-white text-lg' : 'text-gray-900 dark:text-gray-100'}`}>
-                    {convertTemperature(day.maxTemp, 'C', temperatureUnit)}° / {convertTemperature(day.minTemp, 'C', temperatureUnit)}°
+                    {convertTemperature(day.minTemp, 'C', temperatureUnit)}° / {convertTemperature(day.maxTemp, 'C', temperatureUnit)}°
                   </div>
                   {day.precipitationProbability > 0 && (
                     <div className={`text-sm flex items-center ${isToday ? 'text-gray-600 dark:text-gray-400' : 'text-gray-600 dark:text-gray-400'}`}>
