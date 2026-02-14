@@ -264,24 +264,50 @@ This appears when:
 
 ## Deployment
 
-### Vercel (Recommended)
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Add environment variables in Vercel dashboard:
-   - `OPENAI_API_KEY`: Your OpenAI API key
-4. Deploy automatically
+### Quick Deployment to Vercel (Recommended)
+
+1. **Push to GitHub**
+   ```bash
+   git push origin main
+   ```
+
+2. **Deploy to Vercel**
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Import your GitHub repository
+   - Vercel auto-detects Next.js
+
+3. **Add Environment Variables** (CRITICAL!)
+   
+   In Vercel Dashboard → Settings → Environment Variables, add:
+   
+   | Variable | Description |
+   |----------|-------------|
+   | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (SECRET!) |
+   | `OPENAI_API_KEY` | Your OpenAI API key |
+
+4. **Deploy!**
+
+**📖 For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)**
 
 ### Environment Variables for Production
-Make sure to add these environment variables in your hosting platform:
-- `OPENAI_API_KEY` (required)
-- `WEATHER_API_KEY` (optional)
+
+**Required:**
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase public/anonymous key
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server-side only)
+- `OPENAI_API_KEY` - Your OpenAI API key
+
+⚠️ **Important:** Never commit these keys to your repository. Use environment variables in your hosting platform.
 
 ### Other Platforms
+
 The application can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- AWS Amplify
-- DigitalOcean App Platform
+- **Netlify** - See [DEPLOYMENT.md](./DEPLOYMENT.md#netlify)
+- **Railway** - See [DEPLOYMENT.md](./DEPLOYMENT.md#railway)
+- **DigitalOcean App Platform** - See [DEPLOYMENT.md](./DEPLOYMENT.md#digitalocean-app-platform)
+- **Self-Hosted** - See [DEPLOYMENT.md](./DEPLOYMENT.md#self-hosting)
 
 ## Customization
 
@@ -378,6 +404,7 @@ For issues and questions:
 
 - **[QUICK_START.md](./QUICK_START.md)** - 5-minute setup guide for authentication
 - **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - Detailed Supabase configuration
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide for Vercel and other platforms
 - **[USER_AUTHENTICATION_GUIDE.md](./USER_AUTHENTICATION_GUIDE.md)** - Complete auth features
 - **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Technical overview
 - **[TESTING.md](./TESTING.md)** - Testing guidelines

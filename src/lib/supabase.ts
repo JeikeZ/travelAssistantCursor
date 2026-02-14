@@ -1,21 +1,43 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Supabase client configuration
-// Get environment variables from .env.local
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+// Lazy-initialized Supabase client to avoid build-time failures
+let _supabase: SupabaseClient | null = null
 
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables. Please check your .env.local file.')
+/**
+ * Get the client-side Supabase client (lazy initialization)
+ * This prevents build-time failures when environment variables are not set
+ */
+export function getSupabase(): SupabaseClient {
+  if (_supabase) {
+    return _supabase
+  }
+
+  // Get environment variables from .env.local
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+  // Validate environment variables at runtime
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables. Please check your .env.local file.')
+    throw new Error('Missing Supabase environment variables')
+  }
+
+  // Create a single supabase client for interacting with your database
+  _supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  })
+
+  return _supabase
 }
 
-// Create a single supabase client for interacting with your database
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
+// For backward compatibility, export a Proxy that calls getSupabase()
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return getSupabase()[prop as keyof SupabaseClient]
+  }
 })
 
 // Database types for type safety
